@@ -72,14 +72,15 @@ CampgroundSchema.virtual("reviewCount").get(function () {
 });
 
 //do usunięcia reviews po usunieciu campground
-CampgroundSchema.post("findOneAndDelete", async function (doc) {
-  if (doc) {
-    await Review.deleteMany({
-      _id: {
-        $in: doc.reviews,
-      },
-    });
-  }
-});
+//jest comment poniewaz usuwam w kontrolerze campa nie po findoneanddelete, ale poprzez req.campground, ktory przekazuje mi middleware
+// CampgroundSchema.post("findOneAndDelete", async function (doc) {
+//   if (doc) {
+//     await Review.deleteMany({
+//       _id: {
+//         $in: doc.reviews,
+//       },
+//     });
+//   }
+// });
 
 export const Campground = mongoose.model("Campground", CampgroundSchema);

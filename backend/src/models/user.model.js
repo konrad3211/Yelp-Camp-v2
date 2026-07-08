@@ -8,7 +8,7 @@ const UserSchema = new mongoose.Schema(
       required: true,
       unique: true,
       trim: true,
-      lowecase: true,
+      lowercase: true,
     },
     fullName: {
       type: String,
@@ -19,6 +19,10 @@ const UserSchema = new mongoose.Schema(
       type: String,
       default:
         "https://res.cloudinary.com/dskoxwvuw/image/upload/v1783179068/225-default-avatar_rlu7td.png",
+    },
+    imageFilename: {
+      type: String,
+      default: "",
     },
     email: {
       type: String,

@@ -6,6 +6,10 @@ export const createReview = async (req, res) => {
   const { id } = req.params;
   const campground = await Campground.findById(id);
 
+  if (!campground) {
+    return res.status(404).json({ message: "Campground not found" });
+  }
+
   const review = await Review.create({
     author: req.user._id,
     text,

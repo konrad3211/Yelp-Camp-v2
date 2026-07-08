@@ -1,4 +1,6 @@
 import { Campground } from "../models/campground.model.js";
+import { Review } from "../models/review.model.js";
+import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
 
 export const getCampgrounds = async (req, res) => {
   const campgrounds = await Campground.find({})
@@ -26,11 +28,23 @@ export const getCampground = async (req, res) => {
 export const createCampground = async (req, res) => {
   const { title, location, price, description } = req.body;
   const userId = req.user._id;
+
+  const uploadedImages = await Promise.all(
+    (req.files || []).map(async (file) => {
+      const result = await uploadToCloudinary(file);
+
+      return {
+        url: result.secure_url,
+        filename: result.public_id,
+      };
+    }),
+  );
   const newCampground = new Campground({
     title,
     location,
     price,
     description,
+    images: uploadedImages,
     author: userId,
   });
 
@@ -64,6 +78,7 @@ export const updateCampground = async (req, res) => {
 
 //tutaj juz nie musimy szukac po id campground poniewaz w middleware isAuthor dolaczamy w req ten camp, wiec nie musimy juz pobierac go znow z dbs
 export const deleteCampground = async (req, res) => {
+  await Review.deleteMany({ _id: { $in: req.campground.reviews } });
   await req.campground.deleteOne();
 
   res.status(200).json({

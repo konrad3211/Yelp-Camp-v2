@@ -6,6 +6,7 @@ import reviewRoutes from "./routes/review.route.js";
 import authRoutes from "./routes/auth.route.js";
 import cookieParser from "cookie-parser";
 import { connectDB } from "./lib/db.js";
+import cors from "cors";
 dotenv.config();
 
 const app = express();
