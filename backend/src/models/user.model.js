@@ -1,5 +1,8 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
+import { Campground } from "./campground.model.js";
+import cloudinary from "../lib/cloudinary.js";
+import { Review } from "./review.model.js";
 
 const UserSchema = new mongoose.Schema(
   {
@@ -58,5 +61,24 @@ UserSchema.pre("save", async function () {
 UserSchema.methods.comparePassword = async function (password) {
   return bcrypt.compare(password, this.password);
 };
+
+UserSchema.post("findOneAndDelete", async function (doc) {
+  if (doc) {
+    const campgrounds = await Campground.find({ author: doc._id });
+    for (const campground of campgrounds) {
+      for (const image of campground.images || []) {
+        if (image.filename) {
+          await cloudinary.uploader.destroy(image.filename);
+        }
+      }
+    }
+    await Campground.deleteMany({ author: doc._id });
+    //nie usuwamy opini usera, tylko dajemy author na null i wtedy we froncie mozemy wyswietlic go jako deleted user
+    await Review.updateMany({ author: doc._id }, { $set: { author: null } });
+  }
+  if (doc.imageFilename) {
+    await cloudinary.uploader.destroy(doc.imageFilename);
+  }
+});
 
 export const User = mongoose.model("User", UserSchema);

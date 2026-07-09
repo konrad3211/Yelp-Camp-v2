@@ -112,7 +112,7 @@ export const refreshAccessToken = async (req, res) => {
   res.status(200).json({ accessToken });
 };
 
-//pozniej we froncie bedziemy tego uzywac czy odwiezeniu strony, aby front wiedzial kim jest zalogowany user
+//pozniej we froncie bedziemy tego uzywac przy odwiezeniu strony, aby front wiedzial kim jest zalogowany user
 export const getCurrentUser = async (req, res) => {
   res.status(200).json(req.user);
 };

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  deleteUser,
   getAllUsers,
   getMe,
   updateUser,
@@ -37,7 +38,7 @@ router.patch(
   upload.single("avatar"),
   catchAsync(updateUserAvatar),
 );
-// router.delete("/me", protect, catchAsync(deleteUser));
+router.delete("/me", protect, catchAsync(deleteUser));
 // router.get("/:id", catchAsync(getUser));
 
 export default router;

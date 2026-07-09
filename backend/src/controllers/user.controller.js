@@ -72,3 +72,16 @@ export const updateUserAvatar = async (req, res) => {
     user,
   });
 };
+
+export const deleteUser = async (req, res) => {
+  const userId = req.user._id;
+  await User.findByIdAndDelete(userId);
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+  });
+  res.status(200).json({
+    message: "User has been deleted successfully",
+  });
+};
