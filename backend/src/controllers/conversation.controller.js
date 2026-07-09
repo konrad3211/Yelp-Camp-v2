@@ -1,5 +1,6 @@
 import { Campground } from "../models/campground.model.js";
 import { Conversation } from "../models/conversation.model.js";
+import { Message } from "../models/message.model.js";
 
 export const createConversation = async (req, res) => {
   const { campgroundId } = req.body;
@@ -43,5 +44,41 @@ export const createConversation = async (req, res) => {
   res.status(200).json({
     message: "Conversation already exists",
     conversation,
+  });
+};
+
+export const createMessage = async (req, res) => {
+  const { id: conversationId } = req.params;
+  const { text } = req.body;
+  const userId = req.user._id;
+
+  const conversation = await Conversation.findById(conversationId);
+
+  if (!conversation) {
+    return res.status(404).json({ message: "Conversation not found" });
+  }
+
+  const isParticipant = conversation.participants.some((participantId) =>
+    participantId.equals(userId),
+  );
+
+  if (!isParticipant) {
+    return res.status(403).json({
+      message: "You are not allowed to send messages in this conversation",
+    });
+  }
+
+  const message = await Message.create({
+    conversation: conversationId,
+    sender: userId,
+    text,
+  });
+
+  conversation.lastMessage = message._id;
+  await conversation.save();
+
+  res.status(201).json({
+    message: "Message has been sent successfully",
+    data: message,
   });
 };
