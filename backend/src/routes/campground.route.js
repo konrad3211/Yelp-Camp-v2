@@ -2,9 +2,11 @@ import { Router } from "express";
 import {
   createCampground,
   deleteCampground,
+  deleteCampgroundImage,
   getCampground,
   getCampgrounds,
   updateCampground,
+  updateCampgroundImages,
 } from "../controllers/campground.controller.js";
 import catchAsync from "../lib/catchAsync.js";
 import { protect } from "../middleware/auth.middleware.js";
@@ -34,6 +36,21 @@ router.patch(
   isAuthor,
   validate(updateCampgroundSchema),
   catchAsync(updateCampground),
+);
+
+router.patch(
+  "/:id/images",
+  protect,
+  isAuthor,
+  upload.array("images", 5),
+  catchAsync(updateCampgroundImages),
+);
+
+router.delete(
+  "/:id/images/:imageId",
+  protect,
+  isAuthor,
+  catchAsync(deleteCampgroundImage),
 );
 router.delete("/:id", protect, isAuthor, catchAsync(deleteCampground));
 

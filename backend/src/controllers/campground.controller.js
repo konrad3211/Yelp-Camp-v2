@@ -1,3 +1,4 @@
+import cloudinary from "../lib/cloudinary.js";
 import { Campground } from "../models/campground.model.js";
 import { Review } from "../models/review.model.js";
 import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
@@ -30,6 +31,7 @@ export const createCampground = async (req, res) => {
   const userId = req.user._id;
 
   const uploadedImages = await Promise.all(
+    //map przechodzi po kazdym elemencie tablicy
     (req.files || []).map(async (file) => {
       const result = await uploadToCloudinary(file);
 
@@ -57,7 +59,7 @@ export const createCampground = async (req, res) => {
 };
 
 export const updateCampground = async (req, res) => {
-  const { location, description, price, images, title } = req.body;
+  const { location, description, price, title } = req.body;
 
   //tutaj nie musimy juz szukac po id poniewaz isAuthor juz znalazl ten camp po id i dorzucamy go w req.
   req.campground.set({
@@ -65,7 +67,6 @@ export const updateCampground = async (req, res) => {
     location,
     description,
     price,
-    images,
   });
 
   await req.campground.save();
@@ -73,6 +74,55 @@ export const updateCampground = async (req, res) => {
   res.status(200).json({
     message: "Campground has been updated successfully",
     campground: req.campground,
+  });
+};
+
+export const updateCampgroundImages = async (req, res) => {
+  if (!req.files || req.files.length === 0) {
+    return res.status(400).json({ message: "At least one image is required" });
+  }
+
+  const uploadedImages = await Promise.all(
+    req.files.map(async (file) => {
+      const result = await uploadToCloudinary(file);
+
+      return {
+        url: result.secure_url,
+        filename: result.public_id,
+      };
+    }),
+  );
+
+  req.campground.images.push(...uploadedImages);
+
+  await req.campground.save();
+
+  res.status(200).json({
+    message: "Images have been updated successfully",
+    campground: req.campground,
+  });
+};
+
+export const deleteCampgroundImage = async (req, res) => {
+  const { imageId } = req.params;
+  const campground = req.campground;
+
+  //.id a nie _id bo to jest metoda, ktora wykonuje kod, ktory szuka w tablicy pliku o danym _id
+  const image = campground.images.id(imageId);
+
+  if (!image) {
+    return res.status(404).json({ message: "Image not found" });
+  }
+
+  campground.images.pull(imageId);
+
+  await campground.save();
+
+  await cloudinary.uploader.destroy(image.filename);
+
+  res.status(200).json({
+    message: "Image has been deleted successfully",
+    campground: campground,
   });
 };
 
