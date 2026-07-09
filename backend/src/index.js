@@ -4,6 +4,7 @@ import userRoutes from "./routes/user.route.js";
 import campgroundRoutes from "./routes/campground.route.js";
 import reviewRoutes from "./routes/review.route.js";
 import authRoutes from "./routes/auth.route.js";
+import conversationRoutes from "./routes/conversation.route.js";
 import cookieParser from "cookie-parser";
 import { connectDB } from "./lib/db.js";
 import cors from "cors";
@@ -20,6 +21,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/campgrounds", campgroundRoutes);
 //review route
 app.use("/api/campgrounds/:id/reviews", reviewRoutes);
+app.use("/api/conversations", conversationRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err);
