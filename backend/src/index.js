@@ -8,6 +8,7 @@ import conversationRoutes from "./routes/conversation.route.js";
 import cookieParser from "cookie-parser";
 import { connectDB } from "./lib/db.js";
 import cors from "cors";
+import multer from "multer";
 dotenv.config();
 
 const app = express();
@@ -26,9 +27,36 @@ app.use("/api/conversations", conversationRoutes);
 app.use((err, req, res, next) => {
   console.error(err);
 
+  if (err instanceof multer.MulterError) {
+    if (err.code === "LIMIT_FILE_SIZE") {
+      return res.status(413).json({
+        success: false,
+        message: "File is too large. Maximum file size is 5 MB.",
+      });
+    }
+
+    if (err.code === "LIMIT_FILE_COUNT") {
+      return res.status(400).json({
+        success: false,
+        message: "Too many files. You can upload a maximum of 5 files.",
+      });
+    }
+
+    if (err.code === "LIMIT_UNEXPECTED_FILE") {
+      return res.status(400).json({
+        success: false,
+        message: "Unexpected file field or too many uploaded files",
+      });
+    }
+
+    return res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
   if (err.name === "CastError") {
     return res.status(400).json({
-      message: "Invalid campground id",
+      message: "Invalid resource id",
     });
   }
 

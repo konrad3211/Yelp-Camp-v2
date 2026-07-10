@@ -3,6 +3,35 @@
 // bez zapisywania ich na dysku.
 import multer from "multer";
 
+const storage = multer.memoryStorage();
+
+const allowedMimeTypes = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/heic",
+  "image/heif",
+];
+
+const fileFilter = (req, file, cb) => {
+  if (allowedMimeTypes.includes(file.mimetype)) {
+    return cb(null, true);
+  }
+
+  const error = new Error(
+    "Nieprawidłowy typ pliku. Dozwolone formaty: JPG, PNG i WEBP.",
+  );
+
+  error.statusCode = 400;
+
+  return cb(error, false);
+};
+
 export const upload = multer({
-  storage: multer.memoryStorage(),
+  storage,
+  fileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+    files: 5,
+  },
 });
