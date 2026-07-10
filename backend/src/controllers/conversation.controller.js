@@ -48,28 +48,13 @@ export const createConversation = async (req, res) => {
 };
 
 export const createMessage = async (req, res) => {
-  const { id: conversationId } = req.params;
   const { text } = req.body;
   const userId = req.user._id;
 
-  const conversation = await Conversation.findById(conversationId);
-
-  if (!conversation) {
-    return res.status(404).json({ message: "Conversation not found" });
-  }
-
-  const isParticipant = conversation.participants.some((participantId) =>
-    participantId.equals(userId),
-  );
-
-  if (!isParticipant) {
-    return res.status(403).json({
-      message: "You are not allowed to send messages in this conversation",
-    });
-  }
+  const conversation = req.conversation;
 
   const message = await Message.create({
-    conversation: conversationId,
+    conversation: conversation._id,
     sender: userId,
     text,
   });
@@ -80,5 +65,40 @@ export const createMessage = async (req, res) => {
   res.status(201).json({
     message: "Message has been sent successfully",
     data: message,
+  });
+};
+
+export const getConversations = async (req, res) => {
+  const userId = req.user._id;
+  const conversations = await Conversation.find({
+    participants: userId,
+  })
+    .populate("participants", "username fullName imageUrl")
+    .populate("lastMessage", "text isRead sender createdAt updatedAt")
+    .sort({ updatedAt: -1 });
+
+  res.status(200).json({
+    message:
+      conversations.length === 0
+        ? "You do not have any conversations"
+        : "Conversations have been fetched successfully",
+    conversations,
+  });
+};
+
+export const getConversationMessages = async (req, res) => {
+  const conversation = req.conversation;
+  const messages = await Message.find({
+    conversation: conversation._id,
+  })
+    .populate("sender", "username fullName imageUrl")
+    .sort({ createdAt: 1 });
+
+  res.status(200).json({
+    message:
+      messages.length === 0
+        ? "You do not have any messages in this conversation"
+        : "Messages have been fetched successfully",
+    messages,
   });
 };
