@@ -2,6 +2,9 @@ import cloudinary from "../lib/cloudinary.js";
 import { Campground } from "../models/campground.model.js";
 import { Review } from "../models/review.model.js";
 import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
+import { AppError } from "../utils/appError.js";
+
+const MAX_CAMPGROUND_IMAGES = 5;
 
 export const getCampgrounds = async (req, res) => {
   const campgrounds = await Campground.find({})
@@ -21,18 +24,42 @@ export const getCampground = async (req, res) => {
         select: "fullName username imageUrl",
       },
     });
+
   if (!campground) {
-    return res.status(404).json({ message: "Campground not found" });
+    throw new AppError("Campground not found", 404);
   }
   res.status(200).json(campground);
 };
 export const createCampground = async (req, res) => {
   const { title, location, price, description } = req.body;
   const userId = req.user._id;
+  const files = req.files || [];
 
+  if (files.length === 0) {
+    throw new AppError("At least one image is required", 400);
+  }
+
+  const hasEmptyFile = files.some(
+    (file) => file.size === 0 || !file.buffer?.length,
+  );
+
+  if (hasEmptyFile) {
+    throw new AppError("Uploaded image cannot be empty", 400);
+  }
+
+  if (files.length > MAX_CAMPGROUND_IMAGES) {
+    throw new AppError(
+      `A campground can have a maximum of ${MAX_CAMPGROUND_IMAGES} images`,
+      400,
+    );
+  }
+
+  //Promise.all
+  //czeka, aż wszystkie Promise’y się zakończą,
+  //zwraca tablicę ich wyników.
   const uploadedImages = await Promise.all(
     //map przechodzi po kazdym elemencie tablicy
-    (req.files || []).map(async (file) => {
+    files.map(async (file) => {
       const result = await uploadToCloudinary(file);
 
       return {
@@ -41,7 +68,7 @@ export const createCampground = async (req, res) => {
       };
     }),
   );
-  const newCampground = new Campground({
+  const newCampground = await Campground.create({
     title,
     location,
     price,
@@ -50,40 +77,65 @@ export const createCampground = async (req, res) => {
     author: userId,
   });
 
-  await newCampground.save();
-
   res.status(201).json({
+    success: true,
     message: "Campground has been created successfully",
-    newCampground,
+    campground: newCampground,
   });
 };
 
 export const updateCampground = async (req, res) => {
-  const { location, description, price, title } = req.body;
+  const campground = req.campground;
+  const allowedFields = ["title", "location", "description", "price"];
+  const updates = {};
 
-  //tutaj nie musimy juz szukac po id poniewaz isAuthor juz znalazl ten camp po id i dorzucamy go w req.
-  req.campground.set({
-    title,
-    location,
-    description,
-    price,
-  });
-
-  await req.campground.save();
+  for (const field of allowedFields) {
+    if (req.body[field] !== undefined) {
+      updates[field] = req.body[field];
+    }
+  }
+  campground.set(updates);
+  await campground.save();
 
   res.status(200).json({
+    success: true,
     message: "Campground has been updated successfully",
-    campground: req.campground,
+    campground,
   });
 };
 
 export const updateCampgroundImages = async (req, res) => {
-  if (!req.files || req.files.length === 0) {
-    return res.status(400).json({ message: "At least one image is required" });
+  const files = req.files || [];
+  const campground = req.campground;
+
+  if (files.length === 0) {
+    throw new AppError("At least one image is required", 400);
+  }
+
+  const hasEmptyFile = files.some(
+    (file) => file.size === 0 || !file.buffer?.length,
+  );
+
+  if (hasEmptyFile) {
+    throw new AppError("Uploaded image cannot be empty", 400);
+  }
+
+  const currentImagesCount = campground.images.length;
+
+  const totalImagesCount = currentImagesCount + files.length;
+
+  if (totalImagesCount > MAX_CAMPGROUND_IMAGES) {
+    const availableSlots = MAX_CAMPGROUND_IMAGES - currentImagesCount;
+    const message =
+      availableSlots === 0
+        ? `A campground can have a maximum of ${MAX_CAMPGROUND_IMAGES} images`
+        : `A campground can have a maximum of ${MAX_CAMPGROUND_IMAGES} images. You can upload ${availableSlots} more`;
+
+    throw new AppError(message, 400);
   }
 
   const uploadedImages = await Promise.all(
-    req.files.map(async (file) => {
+    files.map(async (file) => {
       const result = await uploadToCloudinary(file);
 
       return {
@@ -93,13 +145,14 @@ export const updateCampgroundImages = async (req, res) => {
     }),
   );
 
-  req.campground.images.push(...uploadedImages);
+  campground.images.push(...uploadedImages);
 
-  await req.campground.save();
+  await campground.save();
 
   res.status(200).json({
-    message: "Images have been updated successfully",
-    campground: req.campground,
+    success: true,
+    message: "Images have been added successfully",
+    campground,
   });
 };
 
@@ -111,7 +164,7 @@ export const deleteCampgroundImage = async (req, res) => {
   const image = campground.images.id(imageId);
 
   if (!image) {
-    return res.status(404).json({ message: "Image not found" });
+    throw new AppError("Image not found", 404);
   }
 
   campground.images.pull(imageId);
@@ -121,17 +174,25 @@ export const deleteCampgroundImage = async (req, res) => {
   await cloudinary.uploader.destroy(image.filename);
 
   res.status(200).json({
+    success: true,
     message: "Image has been deleted successfully",
-    campground: campground,
+    campground,
   });
 };
 
 //tutaj juz nie musimy szukac po id campground poniewaz w middleware isAuthor dolaczamy w req ten camp, wiec nie musimy juz pobierac go znow z dbs
 export const deleteCampground = async (req, res) => {
-  await Review.deleteMany({ _id: { $in: req.campground.reviews } });
-  await req.campground.deleteOne();
+  const campground = req.campground;
+  await Promise.all(
+    campground.images.map((image) =>
+      cloudinary.uploader.destroy(image.filename),
+    ),
+  );
+  await Review.deleteMany({ _id: { $in: campground.reviews } });
+  await campground.deleteOne();
 
   res.status(200).json({
+    success: true,
     message: "Campground has been deleted successfully",
   });
 };

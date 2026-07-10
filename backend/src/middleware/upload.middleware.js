@@ -19,7 +19,7 @@ const fileFilter = (req, file, cb) => {
   }
 
   const error = new Error(
-    "Nieprawidłowy typ pliku. Dozwolone formaty: JPG, PNG i WEBP.",
+    "Invalid file type. Allowed formats: JPG, PNG, WEBP, HEIC and HEIF.",
   );
 
   error.statusCode = 400;
