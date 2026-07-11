@@ -6,6 +6,7 @@ import {
   createMessage,
   getConversationMessages,
   getConversations,
+  markMessagesAsRead,
 } from "../controllers/conversation.controller.js";
 import { isConversationParticipant } from "../middleware/conversation.middleware.js";
 import { validate } from "../middleware/validate.middleware.js";
@@ -35,6 +36,13 @@ router.post(
   isConversationParticipant,
   validate(createMessageSchema),
   catchAsync(createMessage),
+);
+
+router.patch(
+  "/:id/messages/read",
+  protect,
+  isConversationParticipant,
+  catchAsync(markMessagesAsRead),
 );
 
 export default router;

@@ -12,6 +12,13 @@ import multer from "multer";
 dotenv.config();
 
 const app = express();
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL,
+    credentials: true,
+  }),
+);
+
 app.use(express.json());
 app.use(cookieParser());
 const PORT = process.env.PORT || 3000;
@@ -72,7 +79,17 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-  connectDB();
-});
+const startServer = async () => {
+  try {
+    await connectDB();
+
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.log("Failed to start server:", error);
+    process.exit(1);
+  }
+};
+
+startServer();

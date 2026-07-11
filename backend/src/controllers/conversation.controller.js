@@ -74,6 +74,7 @@ export const getConversations = async (req, res) => {
     participants: userId,
   })
     .populate("participants", "username fullName imageUrl")
+    .populate("campground", "title images")
     .populate("lastMessage", "text isRead sender createdAt updatedAt")
     .sort({ updatedAt: -1 });
 
@@ -102,5 +103,30 @@ export const getConversationMessages = async (req, res) => {
         ? "You do not have any messages in this conversation"
         : "Messages have been fetched successfully",
     messages,
+  });
+};
+
+export const markMessagesAsRead = async (req, res) => {
+  const conversation = req.conversation;
+  const userId = req.user._id;
+  const result = await Message.updateMany(
+    {
+      conversation: conversation._id,
+      sender: { $ne: userId },
+      isRead: false,
+    },
+    {
+      $set: {
+        isRead: true,
+      },
+    },
+  );
+  res.status(200).json({
+    success: true,
+    message:
+      result.modifiedCount === 0
+        ? "There were no unread messages"
+        : "Messages have been marked as read",
+    modifiedCount: result.modifiedCount,
   });
 };
