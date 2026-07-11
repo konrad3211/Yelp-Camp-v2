@@ -77,6 +77,24 @@ export const getConversations = async (req, res) => {
     .populate("campground", "title images")
     .populate("lastMessage", "text isRead sender createdAt updatedAt")
     .sort({ updatedAt: -1 });
+  //.lean();
+
+  //liczy liczbe nieodczytanych wiadomosci
+  const conversationsWithUnreadCount = await Promise.all(
+    conversations.map(async (conversation) => {
+      const unreadCount = await Message.countDocuments({
+        conversation: conversation._id,
+        sender: { $ne: userId },
+        isRead: false,
+      });
+      //tutaj jest toObject poniewaz jak robimy spread to pokazujemy cala strukture obiektu mongoose, wiec musimy dac toObject aby wynik wygladal schludnie. Robimy spread poniewaz chcemy miec jeden obiekt ktory ma conversation i unreadCount a nie conversation: {} i unreadConut: {}
+      //ewentualnie mozna uzyc lean() w zapytaniu conversations
+      return {
+        ...conversation.toObject(),
+        unreadCount,
+      };
+    }),
+  );
 
   res.status(200).json({
     success: true,
@@ -84,24 +102,67 @@ export const getConversations = async (req, res) => {
       conversations.length === 0
         ? "You do not have any conversations"
         : "Conversations have been fetched successfully",
-    conversations,
+    conversations: conversationsWithUnreadCount,
   });
 };
 
+// export const getConversationMessages = async (req, res) => {
+//   const conversation = req.conversation;
+//   const messages = await Message.find({
+//     conversation: conversation._id,
+//   })
+//     .populate("sender", "username fullName imageUrl")
+//     .sort({ createdAt: 1 });
+
+//   res.status(200).json({
+//     success: true,
+//     message:
+//       messages.length === 0
+//         ? "You do not have any messages in this conversation"
+//         : "Messages have been fetched successfully",
+//     messages,
+//   });
+// };
+
 export const getConversationMessages = async (req, res) => {
   const conversation = req.conversation;
+
+  const page = Math.max(Number(req.query.page) || 1, 1);
+  const limit = Math.min(Math.max(Number(req.query.limit) || 30, 1), 100);
+  //ile wiadomości ma pominac
+  const skip = (page - 1) * limit;
+
+  //liczy wszystkie wiadomosci tej rozmowy, zwraca tylko liczbe
+  const totalMessages = await Message.countDocuments({
+    conversation: conversation._id,
+  });
+
   const messages = await Message.find({
     conversation: conversation._id,
   })
     .populate("sender", "username fullName imageUrl")
-    .sort({ createdAt: 1 });
+    .sort({ createdAt: -1 })
+    //pomija odpowiednia liczbe wiadomosci, dla 1st page 0, dla 2 30 najnowszych, dla 3 60...
+    .skip(skip)
+    //pobiera max tyle wiadomosci ile limit
+    .limit(limit);
+
+  messages.reverse();
 
   res.status(200).json({
     success: true,
     message:
-      messages.length === 0
+      totalMessages === 0
         ? "You do not have any messages in this conversation"
-        : "Messages have been fetched successfully",
+        : messages.length === 0
+          ? "No messages found on this page"
+          : "Messages have been fetched successfully",
+
+    page,
+    limit,
+    totalMessages,
+    //sprawdza czy sa jeszcze starsze wiadomosci np. 1st 0 + 30 < 50 === true
+    hasMore: skip + messages.length < totalMessages,
     messages,
   });
 };
