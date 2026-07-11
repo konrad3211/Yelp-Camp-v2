@@ -11,7 +11,7 @@ import {
 import catchAsync from "../lib/catchAsync.js";
 import { protect } from "../middleware/auth.middleware.js";
 import { isAuthor } from "../middleware/isAuthor.middleware.js";
-import { validate } from "../middleware/validate.js";
+import { validate } from "../middleware/validate.middleware.js";
 import {
   createCampgroundSchema,
   updateCampgroundSchema,

@@ -1,6 +1,7 @@
 import { Campground } from "../models/campground.model.js";
 import { Conversation } from "../models/conversation.model.js";
 import { Message } from "../models/message.model.js";
+import { AppError } from "../utils/appError.js";
 
 export const createConversation = async (req, res) => {
   const { campgroundId } = req.body;
@@ -9,17 +10,13 @@ export const createConversation = async (req, res) => {
   const campground = await Campground.findById(campgroundId);
 
   if (!campground) {
-    return res.status(404).json({
-      message: "Campground not found",
-    });
+    throw new AppError("Campground not found", 404);
   }
 
   const ownerId = campground.author;
 
   if (ownerId.equals(userId)) {
-    return res
-      .status(400)
-      .json({ message: "You cannot start a conversation with yourself" });
+    throw new AppError("You cannot start a conversation with yourself", 400);
   }
 
   let conversation = await Conversation.findOne({
@@ -36,12 +33,14 @@ export const createConversation = async (req, res) => {
     });
 
     return res.status(201).json({
+      success: true,
       message: "Conversation has been created successfully",
       conversation,
     });
   }
 
   res.status(200).json({
+    success: true,
     message: "Conversation already exists",
     conversation,
   });
@@ -63,6 +62,7 @@ export const createMessage = async (req, res) => {
   await conversation.save();
 
   res.status(201).json({
+    success: true,
     message: "Message has been sent successfully",
     data: message,
   });
@@ -78,6 +78,7 @@ export const getConversations = async (req, res) => {
     .sort({ updatedAt: -1 });
 
   res.status(200).json({
+    success: true,
     message:
       conversations.length === 0
         ? "You do not have any conversations"
@@ -95,6 +96,7 @@ export const getConversationMessages = async (req, res) => {
     .sort({ createdAt: 1 });
 
   res.status(200).json({
+    success: true,
     message:
       messages.length === 0
         ? "You do not have any messages in this conversation"

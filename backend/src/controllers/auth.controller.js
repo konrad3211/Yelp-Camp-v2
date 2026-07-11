@@ -1,5 +1,6 @@
 import { User } from "../models/user.model.js";
 import jwt from "jsonwebtoken";
+import { AppError } from "../utils/appError.js";
 
 const signRefreshToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_REFRESH_SECRET, {
@@ -31,9 +32,7 @@ export const register = async (req, res) => {
     $or: [{ email }, { username }],
   });
   if (existingUser) {
-    return res.status(409).json({
-      message: "Email or username already exists",
-    });
+    throw new AppError("Email or username already exists", 409);
   }
   const user = new User({
     username,
@@ -50,6 +49,7 @@ export const register = async (req, res) => {
   sendRefreshTokenCookie(res, refreshToken);
 
   res.status(201).json({
+    success: true,
     message: "User created successfully",
     accessToken,
     user: {
@@ -67,9 +67,7 @@ export const login = async (req, res) => {
   const user = await User.findOne({ email });
 
   if (!user || !(await user.comparePassword(password))) {
-    return res.status(401).json({
-      message: "Invalid email or password",
-    });
+    throw new AppError("Invalid email or password", 401);
   }
 
   const accessToken = signAccessToken(user._id);
@@ -78,6 +76,7 @@ export const login = async (req, res) => {
   sendRefreshTokenCookie(res, refreshToken);
 
   res.status(200).json({
+    success: true,
     message: "Logged in successfully",
     accessToken,
     user: {
@@ -94,17 +93,23 @@ export const refreshAccessToken = async (req, res) => {
   const refreshToken = req.cookies.refreshToken;
 
   if (!refreshToken) {
-    return res.status(401).json({ message: "No refresh token" });
+    throw new AppError("No refresh token", 401);
   }
 
+  //to jest zrobione po to zeby przeslac error do globalnero error handlera, bez tego error by zwrocil jwt
+  let decoded;
   //sprawdzamy czy token jest prawidlowy, jak jest to zwraca nam id usera
-  const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+  try {
+    decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+  } catch {
+    throw new AppError("Invalid or expired refresh token", 401);
+  }
 
   //szukamy tego usera po id, jak znajdzie to zwraca go bez hasla
   const user = await User.findById(decoded.id).select("-password");
 
   if (!user) {
-    return res.status(401).json({ message: "User no loger exists" });
+    throw new AppError("User no longer exists", 401);
   }
 
   const accessToken = signAccessToken(user._id);
@@ -125,6 +130,7 @@ export const logout = (req, res) => {
   });
 
   res.status(200).json({
+    success: true,
     message: "Logged out successfully",
   });
 };

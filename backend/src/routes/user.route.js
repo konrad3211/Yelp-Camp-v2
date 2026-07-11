@@ -9,7 +9,7 @@ import {
 } from "../controllers/user.controller.js";
 import catchAsync from "../lib/catchAsync.js";
 import { protect } from "../middleware/auth.middleware.js";
-import { validate } from "../middleware/validate.js";
+import { validate } from "../middleware/validate.middleware.js";
 import { upload } from "../middleware/upload.middleware.js";
 import {
   updateUserPasswordSchema,

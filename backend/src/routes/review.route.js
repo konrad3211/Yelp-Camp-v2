@@ -7,7 +7,7 @@ import {
   updateReview,
 } from "../controllers/review.controller.js";
 import { isReviewAuthor } from "../middleware/isReviewAuthor.middleware.js";
-import { validate } from "../middleware/validate.js";
+import { validate } from "../middleware/validate.middleware.js";
 import {
   createReviewSchema,
   updateReviewSchema,

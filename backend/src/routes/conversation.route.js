@@ -8,6 +8,11 @@ import {
   getConversations,
 } from "../controllers/conversation.controller.js";
 import { isConversationParticipant } from "../middleware/conversation.middleware.js";
+import { validate } from "../middleware/validate.middleware.js";
+import {
+  createConversationSchema,
+  createMessageSchema,
+} from "../schemas/conversation.schema.js";
 
 const router = Router();
 
@@ -18,11 +23,17 @@ router.get(
   isConversationParticipant,
   catchAsync(getConversationMessages),
 );
-router.post("/", protect, catchAsync(createConversation));
+router.post(
+  "/",
+  protect,
+  validate(createConversationSchema),
+  catchAsync(createConversation),
+);
 router.post(
   "/:id/messages",
   protect,
   isConversationParticipant,
+  validate(createMessageSchema),
   catchAsync(createMessage),
 );
 

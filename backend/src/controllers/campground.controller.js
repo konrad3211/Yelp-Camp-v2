@@ -34,6 +34,8 @@ export const createCampground = async (req, res) => {
   const { title, location, price, description } = req.body;
   const userId = req.user._id;
   const files = req.files || [];
+  //data jest z validate. Sa tam juz po walidacji informacje.
+  const data = req.body;
 
   if (files.length === 0) {
     throw new AppError("At least one image is required", 400);
@@ -68,11 +70,9 @@ export const createCampground = async (req, res) => {
       };
     }),
   );
+
   const newCampground = await Campground.create({
-    title,
-    location,
-    price,
-    description,
+    ...data,
     images: uploadedImages,
     author: userId,
   });
@@ -84,17 +84,32 @@ export const createCampground = async (req, res) => {
   });
 };
 
+// export const updateCampground = async (req, res) => {
+//   const campground = req.campground;
+//   const allowedFields = ["title", "location", "description", "price"];
+//   const updates = {};
+
+//   for (const field of allowedFields) {
+//     if (req.body[field] !== undefined) {
+//       updates[field] = req.body[field];
+//     }
+//   }
+//   campground.set(updates);
+//   await campground.save();
+
+//   res.status(200).json({
+//     success: true,
+//     message: "Campground has been updated successfully",
+//     campground,
+//   });
+// };
+
+//*tutaj data mamy juz z validate middleware, wiec tak mozna uproscic ten kontroler
 export const updateCampground = async (req, res) => {
   const campground = req.campground;
-  const allowedFields = ["title", "location", "description", "price"];
-  const updates = {};
+  const data = req.body;
 
-  for (const field of allowedFields) {
-    if (req.body[field] !== undefined) {
-      updates[field] = req.body[field];
-    }
-  }
-  campground.set(updates);
+  campground.set(data);
   await campground.save();
 
   res.status(200).json({
