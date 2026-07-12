@@ -1,4 +1,5 @@
 import express from "express";
+import http from "http";
 import dotenv from "dotenv";
 import userRoutes from "./routes/user.route.js";
 import campgroundRoutes from "./routes/campground.route.js";
@@ -6,12 +7,15 @@ import reviewRoutes from "./routes/review.route.js";
 import authRoutes from "./routes/auth.route.js";
 import conversationRoutes from "./routes/conversation.route.js";
 import cookieParser from "cookie-parser";
+import { initializeSocket } from "./lib/socket.js";
 import { connectDB } from "./lib/db.js";
 import cors from "cors";
 import multer from "multer";
 dotenv.config();
 
 const app = express();
+const PORT = process.env.PORT || 3000;
+
 app.use(
   cors({
     origin: process.env.CLIENT_URL,
@@ -21,7 +25,6 @@ app.use(
 
 app.use(express.json());
 app.use(cookieParser());
-const PORT = process.env.PORT || 3000;
 
 app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
@@ -30,6 +33,13 @@ app.use("/api/campgrounds", campgroundRoutes);
 //review route
 app.use("/api/campgrounds/:id/reviews", reviewRoutes);
 app.use("/api/conversations", conversationRoutes);
+
+const httpServer = http.createServer(app);
+
+const io = initializeSocket(httpServer);
+
+// to nie uruchamia Socket.IO. Ono tylko zapisuje referencję do instancji io pod nazwą
+app.set("io", io);
 
 app.use((err, req, res, next) => {
   console.error(err);
@@ -63,12 +73,14 @@ app.use((err, req, res, next) => {
   }
   if (err.name === "CastError") {
     return res.status(400).json({
+      success: false,
       message: "Invalid resource id",
     });
   }
 
   if (err.name === "ValidationError") {
     return res.status(400).json({
+      success: false,
       message: err.message,
     });
   }
@@ -83,7 +95,7 @@ const startServer = async () => {
   try {
     await connectDB();
 
-    app.listen(PORT, () => {
+    httpServer.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
     });
   } catch (error) {

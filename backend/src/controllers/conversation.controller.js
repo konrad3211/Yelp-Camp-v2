@@ -61,6 +61,22 @@ export const createMessage = async (req, res) => {
   conversation.lastMessage = message._id;
   await conversation.save();
 
+  // Message.create() zwraca dokument Mongoose, dlatego możemy użyć populate().
+  // Populate zamienia ObjectId z pola sender na dane użytkownika.
+  await message.populate("sender", "username fullName imageUrl");
+
+  const recipientId = conversation.participants.find(
+    (participantId) => !participantId.equals(userId),
+  );
+
+  if (!recipientId) {
+    throw new AppError("Message recipient not found", 500);
+  }
+
+  const io = req.app.get("io");
+
+  io.to(`user:${recipientId.toString()}`).emit("newMessage", message);
+
   res.status(201).json({
     success: true,
     message: "Message has been sent successfully",
