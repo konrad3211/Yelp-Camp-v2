@@ -96,7 +96,7 @@ export const refreshAccessToken = async (req, res) => {
     throw new AppError("No refresh token", 401);
   }
 
-  //to jest zrobione po to zeby przeslac error do globalnero error handlera, bez tego error by zwrocil jwt
+  //to jest zrobione po to zeby przeslac error do globalnego error handlera, bez tego error by zwrocil jwt
   let decoded;
   //sprawdzamy czy token jest prawidlowy, jak jest to zwraca nam id usera
   try {
@@ -114,7 +114,7 @@ export const refreshAccessToken = async (req, res) => {
 
   const accessToken = signAccessToken(user._id);
 
-  res.status(200).json({ accessToken });
+  res.status(200).json({ success: true, accessToken, user });
 };
 
 //pozniej we froncie bedziemy tego uzywac przy odwiezeniu strony, aby front wiedzial kim jest zalogowany user
