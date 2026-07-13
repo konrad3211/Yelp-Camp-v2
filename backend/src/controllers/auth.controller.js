@@ -118,7 +118,7 @@ export const refreshAccessToken = async (req, res) => {
     success: true,
     accessToken,
     user: {
-      userId: user._id,
+      _id: user._id,
       fullName: user.fullName,
       email: user.email,
       username: user.username,

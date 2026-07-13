@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { logout } from "../api/auth.api";
 import { getMe } from "../api/user.api";
 import type { User } from "../types/user";
+import { Link } from "react-router-dom";
 
 const HomePage = () => {
   const [user, setUser] = useState<User>(null);
@@ -34,6 +35,7 @@ const HomePage = () => {
     <main>
       <h1>Home</h1>
       {user && <p>Logged in as: {user.username}</p>}
+      <Link to="/conversations">Conversations</Link>
       {error && <p>{error}</p>}
       <button onClick={handleLogout} type="button">
         Log out

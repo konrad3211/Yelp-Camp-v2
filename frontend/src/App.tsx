@@ -4,6 +4,8 @@ import { refreshAuth } from "./api/auth.api";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { useAuthStore } from "./store/auth.store";
 import HomePage from "./pages/HomePage";
+import ConversationsPage from "./pages/ConversationsPage";
+import ConversationPage from "./pages/ConversationPage";
 
 const App = () => {
   const user = useAuthStore((state) => state.user);
@@ -37,6 +39,18 @@ const App = () => {
       <Route
         path="/"
         element={user ? <HomePage /> : <Navigate to="/login" replace />}
+      />
+
+      <Route
+        path="/conversations"
+        element={
+          user ? <ConversationsPage /> : <Navigate to="/login" replace />
+        }
+      />
+
+      <Route
+        path="/conversations/:id"
+        element={user ? <ConversationPage /> : <Navigate to="/login" replace />}
       />
     </Routes>
   );
