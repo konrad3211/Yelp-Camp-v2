@@ -5,3 +5,8 @@ export type User = {
   email: string;
   imageUrl: string;
 };
+
+export type GetMeResponse = {
+  success: boolean;
+  user: User;
+};

@@ -114,7 +114,17 @@ export const refreshAccessToken = async (req, res) => {
 
   const accessToken = signAccessToken(user._id);
 
-  res.status(200).json({ success: true, accessToken, user });
+  res.status(200).json({
+    success: true,
+    accessToken,
+    user: {
+      userId: user._id,
+      fullName: user.fullName,
+      email: user.email,
+      username: user.username,
+      imageUrl: user.imageUrl,
+    },
+  });
 };
 
 //pozniej we froncie bedziemy tego uzywac przy odwiezeniu strony, aby front wiedzial kim jest zalogowany user

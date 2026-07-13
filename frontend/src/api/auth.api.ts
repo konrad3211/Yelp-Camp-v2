@@ -1,6 +1,11 @@
 import { authApi } from "./axios";
 import { useAuthStore } from "../store/auth.store";
-import type { LoginData, LoginResponse } from "../types/auth";
+import type {
+  LoginData,
+  LoginResponse,
+  LogoutResponse,
+  RefreshResponse,
+} from "../types/auth";
 
 export const login = async (loginData: LoginData) => {
   const response = await authApi.post<LoginResponse>("/auth/login", loginData);
@@ -16,7 +21,7 @@ export const login = async (loginData: LoginData) => {
 };
 
 export const refreshAuth = async () => {
-  const response = await authApi.post("/auth/refresh");
+  const response = await authApi.post<RefreshResponse>("/auth/refresh");
 
   const { accessToken, user } = response.data;
 
@@ -25,5 +30,11 @@ export const refreshAuth = async () => {
   authStore.setAccessToken(accessToken);
   authStore.setUser(user);
 
+  return response.data;
+};
+
+export const logout = async () => {
+  const response = await authApi.post<LogoutResponse>("/auth/logout");
+  useAuthStore.getState().logout();
   return response.data;
 };

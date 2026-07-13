@@ -1,5 +1,5 @@
 import { useState, type SubmitEventHandler } from "react";
-import { login } from "../api/auth.api";
+import { login, logout } from "../api/auth.api";
 import { useAuthStore } from "../store/auth.store";
 
 const LoginPage = () => {
@@ -8,11 +8,12 @@ const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
+  //Obserwuj pole user i odśwież ten komponent, gdy jego wartość się zmieni”.
   const user = useAuthStore((state) => state.user);
-  const accessToken = useAuthStore((state) => state.accessToken);
+  // const accessToken = useAuthStore((state) => state.accessToken);
 
-  console.log("user from store:", user);
-  console.log("Access token from store:", accessToken);
+  // console.log("user from store:", user);
+  // console.log("Access token from store:", accessToken);
 
   const handleSubmit: SubmitEventHandler<HTMLFormElement> = async (event) => {
     event.preventDefault();
@@ -35,10 +36,28 @@ const LoginPage = () => {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      setIsLoading(true);
+      await logout();
+    } catch (error) {
+      console.error("Logout failed:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <main>
       <h1>Log in</h1>
-      {user && <p>Logged in as: {user.username}</p>}
+      {user && (
+        <div>
+          <p>Logged in as: {user.username}</p>
+          <button type="button" onClick={handleLogout} disabled={isLoading}>
+            {isLoading ? "Logging out..." : "Log out"}
+          </button>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit}>
         <div>

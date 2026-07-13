@@ -17,3 +17,8 @@ export type RefreshResponse = {
   accessToken: string;
   user: User;
 };
+
+export type LogoutResponse = {
+  success: boolean;
+  message: string;
+};

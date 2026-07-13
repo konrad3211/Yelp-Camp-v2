@@ -6,6 +6,7 @@ type RetryRequestConfig = InternalAxiosRequestConfig & {
   _retry?: boolean;
 };
 
+//to api bedzie uzywane do endpointow, ktore wymagaja zalogowanego usera i access token.
 export const api = axios.create({
   //url do backend
   baseURL: import.meta.env.VITE_API_URL,
