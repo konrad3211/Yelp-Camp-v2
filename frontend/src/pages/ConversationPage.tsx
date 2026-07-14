@@ -5,6 +5,8 @@ import {
   createMessage,
   getConversationMessages,
 } from "../api/conversation.api";
+import type { Message } from "../types/message";
+import { socket } from "../lib/socket";
 
 const ConversationPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -37,6 +39,21 @@ const ConversationPage = () => {
     };
     fetchMessages();
   }, []);
+
+  useEffect(() => {
+    const handleNewMessage = (newMessage: Message) => {
+      if (newMessage.conversation !== id) {
+        return;
+      }
+
+      setMessages((currentMessages) => [...currentMessages, newMessage]);
+    };
+    socket.on("newMessage", handleNewMessage);
+
+    return () => {
+      socket.off("newMessage", handleNewMessage);
+    };
+  }, [id]);
 
   const handleSubmit: SubmitEventHandler<HTMLFormElement> = async (event) => {
     event.preventDefault();

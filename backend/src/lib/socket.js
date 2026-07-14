@@ -23,6 +23,7 @@ export const initializeSocket = (httpServer) => {
       //   },
       // });
       //i backend odbiera ten token socket.handshake.auth.token;
+      //to pobiera accessToken a fronta, ktory wczesniej pobral z backnedu accesstoken
       const token = socket.handshake.auth.token;
       if (!token) {
         return next(new Error("Authentication required"));
