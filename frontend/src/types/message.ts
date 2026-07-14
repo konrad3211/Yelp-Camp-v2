@@ -17,3 +17,12 @@ export type GetMessagesResponse = {
   totalMessages: number;
   messages: Message[];
 };
+
+export type CreateMessageData = {
+  text: string;
+};
+export type CreateMessageResponse = {
+  success: boolean;
+  message: string;
+  data: Message;
+};

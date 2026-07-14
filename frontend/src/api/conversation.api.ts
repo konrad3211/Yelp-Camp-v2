@@ -1,6 +1,10 @@
 import { api } from "./axios";
 import type { getConversationResponse } from "../types/conversation";
-import type { GetMessagesResponse } from "../types/message";
+import type {
+  CreateMessageData,
+  CreateMessageResponse,
+  GetMessagesResponse,
+} from "../types/message";
 
 export const getConversations = async () => {
   const response = await api.get<getConversationResponse>("/conversations");
@@ -20,6 +24,17 @@ export const getConversationMessages = async (
         limit,
       },
     },
+  );
+  return response.data;
+};
+
+export const createMessage = async (
+  conversationId: string,
+  message: CreateMessageData,
+) => {
+  const response = await api.post<CreateMessageResponse>(
+    `/conversations/${conversationId}/messages`,
+    message,
   );
   return response.data;
 };

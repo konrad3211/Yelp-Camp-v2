@@ -1,7 +1,10 @@
 import { Link, useParams } from "react-router-dom";
 import { useAuthStore } from "../store/auth.store";
-import { useEffect, useState } from "react";
-import { getConversationMessages } from "../api/conversation.api";
+import { useEffect, useState, type SubmitEventHandler } from "react";
+import {
+  createMessage,
+  getConversationMessages,
+} from "../api/conversation.api";
 
 const ConversationPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -9,6 +12,8 @@ const ConversationPage = () => {
   const currentUser = useAuthStore((state) => state.user);
 
   const [messages, setMessages] = useState([]);
+  const [text, setText] = useState("");
+  const [isSending, setIsSending] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -33,6 +38,24 @@ const ConversationPage = () => {
     fetchMessages();
   }, []);
 
+  const handleSubmit: SubmitEventHandler<HTMLFormElement> = async (event) => {
+    event.preventDefault();
+    const trimmedText = text.trim();
+    if (!id || !trimmedText) return;
+    try {
+      setIsSending(true);
+      const msg = await createMessage(id, { text: trimmedText });
+      setMessages((prevMessages) => [...prevMessages, msg.data]);
+      setText("");
+      console.log("You sent a message", msg);
+    } catch (error) {
+      console.error("Failed to send a message", error);
+      setError("Failed to send a message");
+    } finally {
+      setIsSending(false);
+    }
+  };
+
   if (isLoading) return <p>Loading messages...</p>;
   if (error) return <p>{error}</p>;
   return (
@@ -54,6 +77,22 @@ const ConversationPage = () => {
           );
         })
       )}
+      <form onSubmit={handleSubmit}>
+        <div>
+          <label htmlFor="message"></label>
+          <input
+            id="message"
+            type="text"
+            value={text}
+            placeholder="Write a message..."
+            maxLength={1000}
+            onChange={(event) => setText(event.target.value)}
+          />
+        </div>
+        <button type="submit" disabled={isSending || !text.trim()}>
+          {isSending ? "Sending..." : "Send"}
+        </button>
+      </form>
     </main>
   );
 };
