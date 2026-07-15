@@ -4,6 +4,7 @@ import { useEffect, useState, type SubmitEventHandler } from "react";
 import {
   createMessage,
   getConversationMessages,
+  markMessagesAsRead,
 } from "../api/conversation.api";
 import type { Message } from "../types/message";
 import { socket } from "../lib/socket";
@@ -13,7 +14,7 @@ const ConversationPage = () => {
 
   const currentUser = useAuthStore((state) => state.user);
 
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -30,6 +31,7 @@ const ConversationPage = () => {
         setError("");
         const data = await getConversationMessages(id);
         setMessages(data.messages);
+        await markMessagesAsRead(id);
       } catch (error) {
         console.error("Failed to fetch messages:", error);
         setError("Failed to fetch messages");
@@ -38,20 +40,57 @@ const ConversationPage = () => {
       }
     };
     fetchMessages();
-  }, []);
+  }, [id]);
 
   useEffect(() => {
-    const handleNewMessage = (newMessage: Message) => {
-      if (newMessage.conversation !== id) {
-        return;
-      }
+    //Tworzysz funkcję, która wykona się za każdym razem, gdy backend wyemituje: newMessage
+    const handleNewMessage = async (newMessage: Message) => {
+      if (newMessage.conversation !== id) return;
 
       setMessages((currentMessages) => [...currentMessages, newMessage]);
+
+      if (id) {
+        try {
+          await markMessagesAsRead(id);
+        } catch (error) {
+          console.error("Failed to mark message as read:", error);
+        }
+      }
     };
+
     socket.on("newMessage", handleNewMessage);
 
     return () => {
       socket.off("newMessage", handleNewMessage);
+    };
+  }, [id]);
+
+  useEffect(() => {
+    //Tworzysz funkcję, która wykona się za każdym razem, gdy backend wyemituje: messagesRead
+    const handleMessagesRead = ({
+      conversationId,
+      messageIds,
+    }: {
+      conversationId: string;
+      messageIds: string[];
+    }) => {
+      if (conversationId !== id) return;
+      setMessages((currentMessages) =>
+        currentMessages.map((message) =>
+          messageIds.includes(message._id)
+            ? {
+                ...message,
+                isRead: true,
+              }
+            : message,
+        ),
+      );
+    };
+
+    socket.on("messagesRead", handleMessagesRead);
+
+    return () => {
+      socket.off("messagesRead", handleMessagesRead);
     };
   }, [id]);
 
@@ -61,6 +100,7 @@ const ConversationPage = () => {
     if (!id || !trimmedText) return;
     try {
       setIsSending(true);
+      setError("");
       const msg = await createMessage(id, { text: trimmedText });
       setMessages((prevMessages) => [...prevMessages, msg.data]);
       setText("");
@@ -89,6 +129,7 @@ const ConversationPage = () => {
             <article key={message._id}>
               <strong>{isOwnMessage ? "You" : message.sender.username}</strong>
               <p>{message.text}</p>
+              {isOwnMessage && <p>{message.isRead ? "Read" : "Sent"}</p>}
               <small>{new Date(message.createdAt).toLocaleString()}</small>
             </article>
           );

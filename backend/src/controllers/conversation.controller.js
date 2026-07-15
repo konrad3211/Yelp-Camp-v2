@@ -122,24 +122,6 @@ export const getConversations = async (req, res) => {
   });
 };
 
-// export const getConversationMessages = async (req, res) => {
-//   const conversation = req.conversation;
-//   const messages = await Message.find({
-//     conversation: conversation._id,
-//   })
-//     .populate("sender", "username fullName imageUrl")
-//     .sort({ createdAt: 1 });
-
-//   res.status(200).json({
-//     success: true,
-//     message:
-//       messages.length === 0
-//         ? "You do not have any messages in this conversation"
-//         : "Messages have been fetched successfully",
-//     messages,
-//   });
-// };
-
 export const getConversationMessages = async (req, res) => {
   const conversation = req.conversation;
 
@@ -186,11 +168,22 @@ export const getConversationMessages = async (req, res) => {
 export const markMessagesAsRead = async (req, res) => {
   const conversation = req.conversation;
   const userId = req.user._id;
-  const result = await Message.updateMany(
+  const recipientId = conversation.participants.find(
+    (participantId) => !participantId.equals(userId),
+  );
+
+  const filter = {
+    conversation: conversation._id,
+    sender: { $ne: userId },
+    isRead: false,
+  };
+
+  //bierzemy dokumenty mongoose
+  const messageIds = await Message.distinct("_id", filter);
+
+  await Message.updateMany(
     {
-      conversation: conversation._id,
-      sender: { $ne: userId },
-      isRead: false,
+      _id: { $in: messageIds },
     },
     {
       $set: {
@@ -198,12 +191,23 @@ export const markMessagesAsRead = async (req, res) => {
       },
     },
   );
+
+  const updatedMessages = await Message.find({
+    _id: { $in: messageIds },
+  }).populate("sender", "username fullName imageUrl");
+
+  if (recipientId) {
+    const io = req.app.get("io");
+
+    io.to(`user:${recipientId.toString()}`).emit("messagesRead", {
+      conversationId: conversation._id.toString(),
+      messageIds: updatedMessages.map((message) => message._id.toString()),
+    });
+  }
+
   res.status(200).json({
     success: true,
-    message:
-      result.modifiedCount === 0
-        ? "There were no unread messages"
-        : "Messages have been marked as read",
-    modifiedCount: result.modifiedCount,
+    message: "Messages marked as read",
+    data: updatedMessages,
   });
 };

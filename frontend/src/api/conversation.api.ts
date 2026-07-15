@@ -4,6 +4,7 @@ import type {
   CreateMessageData,
   CreateMessageResponse,
   GetMessagesResponse,
+  MarkMessagesAsReadResponse,
 } from "../types/message";
 
 export const getConversations = async () => {
@@ -25,6 +26,7 @@ export const getConversationMessages = async (
       },
     },
   );
+
   return response.data;
 };
 
@@ -35,6 +37,13 @@ export const createMessage = async (
   const response = await api.post<CreateMessageResponse>(
     `/conversations/${conversationId}/messages`,
     message,
+  );
+  return response.data;
+};
+
+export const markMessagesAsRead = async (conversationId: string) => {
+  const response = await api.patch<MarkMessagesAsReadResponse>(
+    `/conversations/${conversationId}/messages/read`,
   );
   return response.data;
 };

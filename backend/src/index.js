@@ -11,6 +11,7 @@ import { initializeSocket } from "./lib/socket.js";
 import { connectDB } from "./lib/db.js";
 import cors from "cors";
 import multer from "multer";
+import { success } from "zod";
 dotenv.config();
 
 const app = express();
@@ -82,6 +83,20 @@ app.use((err, req, res, next) => {
     return res.status(400).json({
       success: false,
       message: err.message,
+    });
+  }
+
+  if (err.name === "TokenExpiredError") {
+    return res.status(401).json({
+      success: false,
+      message: "Access token expired",
+    });
+  }
+
+  if (err.name === "JsonWebTokenError") {
+    return res.status(401).json({
+      success: false,
+      message: "Invalid access token",
     });
   }
 
