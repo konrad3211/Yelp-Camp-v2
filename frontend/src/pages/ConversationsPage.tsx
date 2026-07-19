@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import type { Conversation } from "../types/conversation";
 import { getConversations } from "../api/conversation.api";
 import { Link } from "react-router-dom";
+import type { Message } from "../types/message";
+import { socket } from "../lib/socket";
 
 const ConversationsPage = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -21,6 +23,33 @@ const ConversationsPage = () => {
       }
     };
     fetchConversations();
+  }, []);
+
+  useEffect(() => {
+    const handleNewMessage = (newMessage: Message) => {
+      setConversations((prevConversations) =>
+        prevConversations
+          .map((conversation) =>
+            conversation._id === newMessage.conversation
+              ? {
+                  ...conversation,
+                  lastMessage: newMessage,
+                  unreadCount: (conversation.unreadCount ?? 0) + 1,
+                  updatedAt: newMessage.createdAt,
+                }
+              : conversation,
+          )
+          .sort(
+            (a, b) =>
+              new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+          ),
+      );
+    };
+
+    socket.on("newMessage", handleNewMessage);
+    return () => {
+      socket.off("newMessage", handleNewMessage);
+    };
   }, []);
 
   if (isLoading) return <p>Loading conversations...</p>;
