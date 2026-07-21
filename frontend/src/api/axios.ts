@@ -19,6 +19,11 @@ export const authApi = axios.create({
   withCredentials: true,
 });
 
+//Instacja dla publicznych routow
+export const publicApi = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
+});
+
 //interceptor Axios, który automatycznie dołączy access token do każdego requestu.
 //Dzięki temu nie bede musiał za każdym razem pisać:
 // headers: {

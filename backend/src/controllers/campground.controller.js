@@ -9,8 +9,18 @@ const MAX_CAMPGROUND_IMAGES = 5;
 export const getCampgrounds = async (req, res) => {
   const campgrounds = await Campground.find({})
     .populate("author", "fullName username imageUrl")
-    .populate("reviews");
-  res.status(200).json(campgrounds);
+    .populate({
+      path: "reviews",
+      populate: {
+        path: "author",
+        select: "fullName username imageUrl",
+      },
+    });
+  res.status(200).json({
+    success: true,
+    message: "Campgrounds have been fetched successfully",
+    data: campgrounds,
+  });
 };
 
 export const getCampground = async (req, res) => {
@@ -28,7 +38,11 @@ export const getCampground = async (req, res) => {
   if (!campground) {
     throw new AppError("Campground not found", 404);
   }
-  res.status(200).json(campground);
+  res.status(200).json({
+    success: true,
+    message: "Campgrounds have been fetched successfully",
+    data: campground,
+  });
 };
 export const createCampground = async (req, res) => {
   const { title, location, price, description } = req.body;

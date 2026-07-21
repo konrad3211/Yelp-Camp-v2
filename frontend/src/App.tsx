@@ -9,6 +9,7 @@ import ConversationPage from "./pages/ConversationPage";
 import { socket } from "./lib/socket";
 import { toast } from "sonner";
 import type { Message } from "./types/message";
+import AppLayout from "@/layouts/AppLayout";
 
 const App = () => {
   const user = useAuthStore((state) => state.user);
@@ -83,27 +84,28 @@ const App = () => {
 
   return (
     <Routes>
+      <Route element={<AppLayout />}>
+        <Route path="/" element={<HomePage />} />
+
+        <Route
+          path="/conversations"
+          element={
+            user ? <ConversationsPage /> : <Navigate to="/login" replace />
+          }
+        />
+
+        <Route
+          path="/conversations/:id"
+          element={
+            user ? <ConversationPage /> : <Navigate to="/login" replace />
+          }
+        />
+      </Route>
+
       <Route
         path="/login"
         //replace nie pozwala cofnac do poprzedniej strony w przegladarce
         element={user ? <Navigate to="/" replace /> : <LoginPage />}
-      />
-
-      <Route
-        path="/"
-        element={user ? <HomePage /> : <Navigate to="/login" replace />}
-      />
-
-      <Route
-        path="/conversations"
-        element={
-          user ? <ConversationsPage /> : <Navigate to="/login" replace />
-        }
-      />
-
-      <Route
-        path="/conversations/:id"
-        element={user ? <ConversationPage /> : <Navigate to="/login" replace />}
       />
     </Routes>
   );
