@@ -1,5 +1,8 @@
 import { api } from "./axios";
-import type { getConversationResponse } from "../types/conversation";
+import type {
+  CreateConversationResponse,
+  getConversationResponse,
+} from "../types/conversation";
 import type {
   CreateMessageData,
   CreateMessageResponse,
@@ -45,5 +48,14 @@ export const markMessagesAsRead = async (conversationId: string) => {
   const response = await api.patch<MarkMessagesAsReadResponse>(
     `/conversations/${conversationId}/messages/read`,
   );
+  return response.data;
+};
+
+export const createConversation = async (campgroundId: string) => {
+  const response = await api.post<CreateConversationResponse>(
+    "/conversations",
+    { campgroundId },
+  );
+
   return response.data;
 };

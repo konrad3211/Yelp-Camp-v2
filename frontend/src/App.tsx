@@ -10,6 +10,7 @@ import { socket } from "./lib/socket";
 import { toast } from "sonner";
 import type { Message } from "./types/message";
 import AppLayout from "@/layouts/AppLayout";
+import CampgroundPage from "./pages/CampgroundPage";
 
 const App = () => {
   const user = useAuthStore((state) => state.user);
@@ -61,7 +62,8 @@ const App = () => {
   }, [accessToken]);
 
   useEffect(() => {
-    const hamdleNewMessagesNotification = (newMessage: Message) => {
+    if (!accessToken) return;
+    const handleNewMessagesNotification = (newMessage: Message) => {
       const openedConversationPath = `/conversations/${newMessage.conversation}`;
 
       if (location.pathname === openedConversationPath) return;
@@ -70,12 +72,12 @@ const App = () => {
         description: newMessage.text,
       });
     };
-    socket.on("newMessage", hamdleNewMessagesNotification);
+    socket.on("newMessage", handleNewMessagesNotification);
 
     return () => {
-      socket.off("newMessage", hamdleNewMessagesNotification);
+      socket.off("newMessage", handleNewMessagesNotification);
     };
-  }, [location.pathname]);
+  }, [location.pathname, accessToken]);
 
   //to wyswietla Loading... i blokuje przejscie do routes przez co jak sie laduje to routy sie nie beda odpalaly co zapobiegnie roznym rzeczom
   if (isAuthLoading) {
@@ -86,6 +88,7 @@ const App = () => {
     <Routes>
       <Route element={<AppLayout />}>
         <Route path="/" element={<HomePage />} />
+        <Route path="/campgrounds/:id" element={<CampgroundPage />} />
 
         <Route
           path="/conversations"
@@ -105,7 +108,7 @@ const App = () => {
       <Route
         path="/login"
         //replace nie pozwala cofnac do poprzedniej strony w przegladarce
-        element={user ? <Navigate to="/" replace /> : <LoginPage />}
+        element={<LoginPage />}
       />
     </Routes>
   );

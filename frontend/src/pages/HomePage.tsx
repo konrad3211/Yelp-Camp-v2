@@ -26,7 +26,7 @@ const HomePage = () => {
         setCampgrounds(data.data);
       } catch (error) {
         console.error("Failed to fetch campgrounds:", error);
-        setError(error);
+        setError("Failed to fetch campgrounds");
       } finally {
         setIsLoading(false);
       }

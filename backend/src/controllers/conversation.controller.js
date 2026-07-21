@@ -35,14 +35,14 @@ export const createConversation = async (req, res) => {
     return res.status(201).json({
       success: true,
       message: "Conversation has been created successfully",
-      conversation,
+      data: conversation,
     });
   }
 
   res.status(200).json({
     success: true,
     message: "Conversation already exists",
-    conversation,
+    data: conversation,
   });
 };
 

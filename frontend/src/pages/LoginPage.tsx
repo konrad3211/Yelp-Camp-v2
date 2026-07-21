@@ -1,19 +1,33 @@
-import { useState, type SubmitEventHandler } from "react";
-import { login, logout } from "../api/auth.api";
-import { useAuthStore } from "../store/auth.store";
+import { useEffect, useState, type SubmitEventHandler } from "react";
+import { login } from "../api/auth.api";
+import { useLocation, useNavigate } from "react-router-dom";
+import { createConversation } from "@/api/conversation.api";
+import { useAuthStore } from "@/store/auth.store";
 
 const LoginPage = () => {
+  const user = useAuthStore((state) => state.user);
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // location.state przechowuje informację, jaką akcję użytkownik
+  // chciał wykonać przed przejściem na stronę logowania.
+  const locationState = location.state as {
+    action?: "contactOwner";
+    campgroundId?: string;
+  } | null;
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  //Obserwuj pole user i odśwież ten komponent, gdy jego wartość się zmieni”.
-  const user = useAuthStore((state) => state.user);
-  // const accessToken = useAuthStore((state) => state.accessToken);
-
-  // console.log("user from store:", user);
-  // console.log("Access token from store:", accessToken);
+  //
+  useEffect(() => {
+    //!isLoading jest poniewaz bez tego od razu po login() przenosilo by nas do /, a ponizej jest jeszcze kod sprawdzajacy czy nie chcemy utworzyc konwersacji.
+    if (user && !isLoading) {
+      navigate("/", { replace: true });
+    }
+  }, [user, isLoading, navigate]);
 
   const handleSubmit: SubmitEventHandler<HTMLFormElement> = async (event) => {
     event.preventDefault();
@@ -28,20 +42,25 @@ const LoginPage = () => {
       });
 
       console.log("You are logged in", data);
-    } catch (error) {
-      console.log(error);
-      setError("Error logging in");
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
-  const handleLogout = async () => {
-    try {
-      setIsLoading(true);
-      await logout();
+      if (
+        locationState?.action === "contactOwner" &&
+        locationState.campgroundId
+      ) {
+        const conversation = await createConversation(
+          locationState.campgroundId,
+        );
+
+        navigate(`/conversations/${conversation.data._id}`, {
+          replace: true,
+        });
+        return;
+      }
+      //jak powyzszu warunek sie nie wykona to przeniesie nas po zalogowaniu na homepage
+      navigate("/", { replace: true });
     } catch (error) {
-      console.error("Logout failed:", error);
+      console.error("Login flow failed:", error);
+      setError("Failed to log in or open conversation");
     } finally {
       setIsLoading(false);
     }
@@ -50,14 +69,6 @@ const LoginPage = () => {
   return (
     <main>
       <h1>Log in</h1>
-      {user && (
-        <div>
-          <p>Logged in as: {user.username}</p>
-          <button type="button" onClick={handleLogout} disabled={isLoading}>
-            {isLoading ? "Logging out..." : "Log out"}
-          </button>
-        </div>
-      )}
 
       <form onSubmit={handleSubmit}>
         <div>

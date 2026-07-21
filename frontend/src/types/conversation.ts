@@ -21,3 +21,9 @@ export type getConversationResponse = {
   message: string;
   conversations: Conversation[];
 };
+
+export type CreateConversationResponse = {
+  success: boolean;
+  message: string;
+  data: Conversation;
+};

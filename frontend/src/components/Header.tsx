@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -71,13 +72,8 @@ const Header = () => {
           ) : (
             <DropdownMenu>
               <DropdownMenuTrigger
-                render={
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Open user menu"
-                  />
-                }
+                className="flex size-10 items-center justify-center rounded-md"
+                aria-label="Open user menu"
               >
                 <Avatar>
                   <AvatarImage src={user.imageUrl} alt={user.username} />
@@ -85,21 +81,27 @@ const Header = () => {
                 </Avatar>
               </DropdownMenuTrigger>
 
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>
-                  <div className="flex flex-col">
-                    <span>{user.fullName}</span>
-                    <span className="text-xs font-normal text-muted-foreground">
-                      @{user.username}
-                    </span>
-                  </div>
-                </DropdownMenuLabel>
+              <DropdownMenuContent align="end" sideOffset={8} className="w-56">
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel>
+                    <div className="flex flex-col">
+                      <span>{user.fullName}</span>
 
-                <DropdownMenuSeparator />
+                      <span className="text-xs font-normal text-muted-foreground">
+                        @{user.username}
+                      </span>
+                    </div>
+                  </DropdownMenuLabel>
 
-                <DropdownMenuItem onClick={handleLogout} variant="destructive">
-                  Log out
-                </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+
+                  <DropdownMenuItem
+                    onClick={handleLogout}
+                    variant="destructive"
+                  >
+                    Log out
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
               </DropdownMenuContent>
             </DropdownMenu>
           )}
