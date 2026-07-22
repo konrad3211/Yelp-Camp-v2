@@ -16,6 +16,8 @@ export const createReview = async (req, res) => {
     ...data,
   });
 
+  await review.populate("author", "username fullName imageUrl");
+
   campground.reviews.push(review._id);
 
   await campground.save();
@@ -23,7 +25,7 @@ export const createReview = async (req, res) => {
   res.status(201).json({
     success: true,
     message: "Review has been created successfully",
-    review,
+    data: review,
   });
 };
 
