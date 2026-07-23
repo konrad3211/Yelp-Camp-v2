@@ -1,10 +1,10 @@
 import { useEffect, useState, type SubmitEventHandler } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { Star, Trash2 } from "lucide-react";
+import { Pencil, Star, Trash2 } from "lucide-react";
 
 import { getCampground } from "@/api/campground.api";
 import { createConversation } from "@/api/conversation.api";
-import { createReview, deleteReview } from "@/api/review.api";
+import { createReview, deleteReview, updateReview } from "@/api/review.api";
 
 import type { Campground } from "@/types/campground";
 
@@ -25,13 +25,19 @@ const CampgroundPage = () => {
   const [rating, setRating] = useState<number | null>(null);
   const [reviewText, setReviewText] = useState("");
 
+  const [editedReviewId, setEditedReviewId] = useState<string | null>(null);
+  const [editedRating, setEditedRating] = useState<number | null>(null);
+  const [editedReviewText, setEditedReviewText] = useState("");
+
   const [isLoading, setIsLoading] = useState(true);
   const [isPostingReview, setIsPostingReview] = useState(false);
+  const [isUpdatingReview, setIsUpdatingReview] = useState(false);
 
   const [deletingReviewId, setDeletingReviewId] = useState<string | null>(null);
 
   const [error, setError] = useState("");
   const [reviewError, setReviewError] = useState("");
+  const [updateReviewError, setUpdateReviewError] = useState("");
   const [deleteReviewError, setDeleteReviewError] = useState("");
 
   useEffect(() => {
@@ -59,6 +65,16 @@ const CampgroundPage = () => {
 
     fetchCampground();
   }, [id]);
+
+  const calculateAverageRating = (reviews: Campground["reviews"]) => {
+    if (reviews.length === 0) {
+      return 0;
+    }
+
+    const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+
+    return totalRating / reviews.length;
+  };
 
   const handleCreateReview: SubmitEventHandler<HTMLFormElement> = async (
     event,
@@ -91,19 +107,11 @@ const CampgroundPage = () => {
 
         const updatedReviews = [...previousCampground.reviews, data.data];
 
-        const totalRating = updatedReviews.reduce(
-          (sum, review) => sum + review.rating,
-          0,
-        );
-
-        const averageRating =
-          updatedReviews.length > 0 ? totalRating / updatedReviews.length : 0;
-
         return {
           ...previousCampground,
           reviews: updatedReviews,
           reviewCount: updatedReviews.length,
-          averageRating,
+          averageRating: calculateAverageRating(updatedReviews),
         };
       });
 
@@ -146,21 +154,19 @@ const CampgroundPage = () => {
           (review) => review._id !== reviewId,
         );
 
-        const totalRating = updatedReviews.reduce(
-          (sum, review) => sum + review.rating,
-          0,
-        );
-
-        const averageRating =
-          updatedReviews.length > 0 ? totalRating / updatedReviews.length : 0;
-
         return {
           ...previousCampground,
           reviews: updatedReviews,
           reviewCount: updatedReviews.length,
-          averageRating,
+          averageRating: calculateAverageRating(updatedReviews),
         };
       });
+
+      if (editedReviewId === reviewId) {
+        setEditedReviewId(null);
+        setEditedRating(null);
+        setEditedReviewText("");
+      }
     } catch (error) {
       console.error("Failed to delete a review:", error);
 
@@ -170,28 +176,107 @@ const CampgroundPage = () => {
     }
   };
 
-  if (isLoading) {
-    return <p>Loading campground...</p>;
-  }
+  const handleStartEditing = (
+    reviewId: string,
+    reviewText: string,
+    reviewRating: number,
+  ) => {
+    setEditedReviewId(reviewId);
+    setEditedReviewText(reviewText);
+    setEditedRating(reviewRating);
 
-  if (error) {
-    return <p>{error}</p>;
-  }
+    setUpdateReviewError("");
+    setDeleteReviewError("");
+  };
 
-  if (!campground) {
-    return <p>Campground not found.</p>;
-  }
+  const handleCancelEditing = () => {
+    setEditedReviewId(null);
+    setEditedRating(null);
+    setEditedReviewText("");
+    setUpdateReviewError("");
+  };
 
-  const mainImage = campground.images[0];
+  const handleUpdateReview: SubmitEventHandler<HTMLFormElement> = async (
+    event,
+  ) => {
+    event.preventDefault();
 
-  const authorInitials = campground.author.fullName
-    .split(" ")
-    .map((word) => word[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+    if (
+      !campground ||
+      !editedReviewId ||
+      editedRating === null ||
+      !editedReviewText.trim() ||
+      isUpdatingReview
+    ) {
+      return;
+    }
+
+    const originalReview = campground.reviews.find(
+      (review) => review._id === editedReviewId,
+    );
+
+    if (!originalReview) {
+      return;
+    }
+
+    const trimmedText = editedReviewText.trim();
+
+    if (
+      trimmedText === originalReview.text &&
+      editedRating === originalReview.rating
+    ) {
+      handleCancelEditing();
+      return;
+    }
+
+    try {
+      setIsUpdatingReview(true);
+      setUpdateReviewError("");
+
+      const data = await updateReview(campground._id, editedReviewId, {
+        rating: editedRating,
+        text: trimmedText,
+      });
+
+      setCampground((previousCampground) => {
+        if (!previousCampground) {
+          return previousCampground;
+        }
+
+        const updatedReviews = previousCampground.reviews.map((review) =>
+          review._id === editedReviewId
+            ? {
+                ...review,
+                ...data.data,
+              }
+            : review,
+        );
+
+        return {
+          ...previousCampground,
+          reviews: updatedReviews,
+          reviewCount: updatedReviews.length,
+          averageRating: calculateAverageRating(updatedReviews),
+        };
+      });
+
+      setEditedReviewId(null);
+      setEditedRating(null);
+      setEditedReviewText("");
+    } catch (error) {
+      console.error("Failed to edit a review:", error);
+
+      setUpdateReviewError("Failed to edit the review");
+    } finally {
+      setIsUpdatingReview(false);
+    }
+  };
 
   const handleContactOwner = async () => {
+    if (!campground) {
+      return;
+    }
+
     if (!currentUser) {
       navigate("/login", {
         state: {
@@ -215,6 +300,27 @@ const CampgroundPage = () => {
       console.error("Failed to create conversation:", error);
     }
   };
+
+  if (isLoading) {
+    return <p>Loading campground...</p>;
+  }
+
+  if (error) {
+    return <p>{error}</p>;
+  }
+
+  if (!campground) {
+    return <p>Campground not found.</p>;
+  }
+
+  const mainImage = campground.images[0];
+
+  const authorInitials = campground.author.fullName
+    .split(" ")
+    .map((word) => word[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
     <section className="space-y-8">
@@ -279,7 +385,8 @@ const CampgroundPage = () => {
                           key={star}
                           type="button"
                           onClick={() => setRating(star)}
-                          className="rounded-md p-1 transition-transform hover:scale-110"
+                          disabled={isPostingReview}
+                          className="rounded-md p-1 transition-transform hover:scale-110 disabled:cursor-not-allowed disabled:opacity-50"
                           aria-label={`Rate ${star} out of 5`}
                         >
                           <Star
@@ -307,7 +414,8 @@ const CampgroundPage = () => {
                       value={reviewText}
                       onChange={(event) => setReviewText(event.target.value)}
                       placeholder="Share your experience..."
-                      className="min-h-28 w-full resize-y rounded-md border bg-background px-3 py-2 outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      disabled={isPostingReview}
+                      className="min-h-28 w-full resize-y rounded-md border bg-background px-3 py-2 outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                       required
                     />
                   </div>
@@ -352,53 +460,158 @@ const CampgroundPage = () => {
                 <p className="text-muted-foreground">No reviews yet.</p>
               ) : (
                 <div className="space-y-4">
-                  {campground.reviews.map((review) => (
-                    <article key={review._id} className="rounded-xl border p-4">
-                      <div className="mb-3 flex items-start justify-between gap-4">
+                  {campground.reviews.map((review) =>
+                    editedReviewId === review._id ? (
+                      <form
+                        key={review._id}
+                        onSubmit={handleUpdateReview}
+                        className="space-y-4 rounded-xl border bg-muted/20 p-4"
+                      >
                         <div>
-                          <p className="font-semibold">
-                            {review.author.username}
-                          </p>
+                          <p className="mb-2 text-sm font-medium">Rating</p>
 
-                          <div
-                            className="mt-1 flex"
-                            aria-label={`${review.rating} out of 5 stars`}
-                          >
+                          <div className="flex gap-1">
                             {[1, 2, 3, 4, 5].map((star) => (
-                              <Star
+                              <button
                                 key={star}
-                                className={
-                                  star <= review.rating
-                                    ? "size-4 fill-yellow-400 text-yellow-400"
-                                    : "size-4 text-muted-foreground"
-                                }
-                              />
+                                type="button"
+                                onClick={() => setEditedRating(star)}
+                                disabled={isUpdatingReview}
+                                className="rounded-md p-1 transition-transform hover:scale-110 disabled:cursor-not-allowed disabled:opacity-50"
+                                aria-label={`Rate ${star} out of 5`}
+                              >
+                                <Star
+                                  className={
+                                    star <= (editedRating ?? 0)
+                                      ? "size-7 fill-yellow-400 text-yellow-400"
+                                      : "size-7 text-muted-foreground"
+                                  }
+                                />
+                              </button>
                             ))}
                           </div>
                         </div>
 
-                        {review.author._id === currentUser?._id && (
+                        <div>
+                          <label
+                            htmlFor={`edit-text-${review._id}`}
+                            className="mb-2 block text-sm font-medium"
+                          >
+                            Review
+                          </label>
+
+                          <textarea
+                            id={`edit-text-${review._id}`}
+                            value={editedReviewText}
+                            onChange={(event) =>
+                              setEditedReviewText(event.target.value)
+                            }
+                            disabled={isUpdatingReview}
+                            className="min-h-24 w-full resize-y rounded-md border bg-background px-3 py-2 outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                            required
+                          />
+                        </div>
+
+                        {updateReviewError && (
+                          <p className="text-sm text-destructive">
+                            {updateReviewError}
+                          </p>
+                        )}
+
+                        <div className="flex justify-end gap-2">
                           <Button
                             type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDeleteReview(review._id)}
-                            disabled={deletingReviewId === review._id}
-                            aria-label="Delete review"
-                            className="text-muted-foreground hover:text-destructive"
+                            variant="outline"
+                            disabled={isUpdatingReview}
+                            onClick={handleCancelEditing}
                           >
-                            <Trash2 className="size-4" />
+                            Cancel
                           </Button>
-                        )}
-                      </div>
 
-                      <p>{review.text}</p>
+                          <Button
+                            type="submit"
+                            disabled={
+                              isUpdatingReview ||
+                              editedRating === null ||
+                              !editedReviewText.trim()
+                            }
+                          >
+                            {isUpdatingReview ? "Saving..." : "Save changes"}
+                          </Button>
+                        </div>
+                      </form>
+                    ) : (
+                      <article
+                        key={review._id}
+                        className="rounded-xl border p-4"
+                      >
+                        <div className="mb-3 flex items-start justify-between gap-4">
+                          <div>
+                            <p className="font-semibold">
+                              {review.author.username}
+                            </p>
 
-                      <small className="mt-2 block text-muted-foreground">
-                        {new Date(review.createdAt).toLocaleString()}
-                      </small>
-                    </article>
-                  ))}
+                            <div
+                              className="mt-1 flex"
+                              aria-label={`${review.rating} out of 5 stars`}
+                            >
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <Star
+                                  key={star}
+                                  className={
+                                    star <= review.rating
+                                      ? "size-4 fill-yellow-400 text-yellow-400"
+                                      : "size-4 text-muted-foreground"
+                                  }
+                                />
+                              ))}
+                            </div>
+                          </div>
+
+                          {review.author._id === currentUser?._id && (
+                            <div className="flex items-center">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() =>
+                                  handleStartEditing(
+                                    review._id,
+                                    review.text,
+                                    review.rating,
+                                  )
+                                }
+                                aria-label="Edit review"
+                                className="text-muted-foreground hover:text-foreground"
+                              >
+                                <Pencil className="size-4" />
+                              </Button>
+
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDeleteReview(review._id)}
+                                disabled={deletingReviewId === review._id}
+                                aria-label="Delete review"
+                                className="text-muted-foreground hover:text-destructive"
+                              >
+                                <Trash2 className="size-4" />
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+
+                        <p>{review.text}</p>
+
+                        <small className="mt-2 block text-muted-foreground">
+                          {new Date(
+                            review.updatedAt ?? review.createdAt,
+                          ).toLocaleString()}
+                        </small>
+                      </article>
+                    ),
+                  )}
                 </div>
               )}
             </CardContent>

@@ -5,7 +5,10 @@ export const isReviewAuthor = async (req, res, next) => {
     const { reviewId } = req.params;
     const userId = req.user._id;
 
-    const review = await Review.findById(reviewId);
+    const review = await Review.findById(reviewId).populate(
+      "author",
+      "username fullName imageUrl",
+    );
 
     if (!review) {
       return res.status(404).json({ message: "Review not found" });

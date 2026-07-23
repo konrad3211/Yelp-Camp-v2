@@ -40,7 +40,7 @@ export const updateReview = async (req, res) => {
   res.status(200).json({
     success: true,
     message: "Review has been updated successfully",
-    review: req.review,
+    data: req.review,
   });
 };
 
