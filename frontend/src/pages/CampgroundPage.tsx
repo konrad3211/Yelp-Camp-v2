@@ -324,7 +324,7 @@ const CampgroundPage = () => {
 
   return (
     <section className="space-y-8">
-      <Button variant="ghost" render={<Link to="/" />}>
+      <Button nativeButton={false} variant="ghost" render={<Link to="/" />}>
         Back to campgrounds
       </Button>
 

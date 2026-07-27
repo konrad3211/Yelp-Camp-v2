@@ -42,17 +42,29 @@ const Header = () => {
           </Link>
 
           <nav className="flex items-center gap-2">
-            <Button variant="ghost" render={<Link to="/campgrounds" />}>
+            <Button
+              nativeButton={false}
+              variant="ghost"
+              render={<Link to="/campgrounds" />}
+            >
               Campgrounds
             </Button>
 
             {user && (
               <>
-                <Button variant="ghost" render={<Link to="/campgrounds/new" />}>
+                <Button
+                  nativeButton={false}
+                  variant="ghost"
+                  render={<Link to="/campgrounds/new" />}
+                >
                   Add campground
                 </Button>
 
-                <Button variant="ghost" render={<Link to="/conversations" />}>
+                <Button
+                  nativeButton={false}
+                  variant="ghost"
+                  render={<Link to="/conversations" />}
+                >
                   Conversations
                 </Button>
               </>
@@ -63,11 +75,17 @@ const Header = () => {
         <div className="flex items-center gap-2">
           {!user ? (
             <>
-              <Button variant="ghost" render={<Link to="/login" />}>
+              <Button
+                nativeButton={false}
+                variant="ghost"
+                render={<Link to="/login" />}
+              >
                 Log in
               </Button>
 
-              <Button render={<Link to="/register" />}>Sign up</Button>
+              <Button nativeButton={false} render={<Link to="/register" />}>
+                Sign up
+              </Button>
             </>
           ) : (
             <DropdownMenu>
