@@ -62,33 +62,41 @@ export const deleteReview = async (req, res) => {
 };
 
 export const getReviews = async (req, res) => {
-  const { campgroundId } = req.params;
+  const { id: campgroundId } = req.params;
 
   const page = Math.max(Number(req.query.page) || 1, 1);
   const limit = Math.min(Math.max(Number(req.query.limit) || 10, 1), 50);
 
   const skip = (page - 1) * limit;
 
-  const campground = await Campground.findById(campgroundId).select("_id");
+  const campground = await Campground.findById(campgroundId).select("reviews");
 
   if (!campground) {
     throw new AppError("Campground not found", 404);
   }
+  //campground zapisuje tylko id reviews
+  const reviewIds = campground.reviews;
 
-  const filter = {
-    campground: campgroundId,
-  };
-
+  //tutaj mamy destrukturyzacje. Czyli pierwszy warunek zostanie przypisany do reviews a drugi do totalReviews.
   const [reviews, totalReviews] = await Promise.all([
-    Review.find(filter)
+    Review.find({
+      _id: {
+        $in: reviewIds,
+      },
+    })
       .populate("author", "username fullName imageUrl")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit),
 
-    Review.countDocuments(filter),
+    Review.countDocuments({
+      _id: {
+        $in: reviewIds,
+      },
+    }),
   ]);
 
+  //zaokragla do gory
   const totalPages = Math.ceil(totalReviews / limit);
 
   res.status(200).json({

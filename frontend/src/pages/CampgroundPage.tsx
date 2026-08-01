@@ -1,12 +1,17 @@
-import { useEffect, useState, type SubmitEventHandler } from "react";
+import { useEffect, useRef, useState, type SubmitEventHandler } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Pencil, Star, Trash2 } from "lucide-react";
 
 import { getCampground } from "@/api/campground.api";
 import { createConversation } from "@/api/conversation.api";
-import { createReview, deleteReview, updateReview } from "@/api/review.api";
+import {
+  createReview,
+  deleteReview,
+  updateReview,
+  getReviews,
+} from "@/api/review.api";
 
-import type { Campground } from "@/types/campground";
+import type { Campground, CampgroundReview } from "@/types/campground";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,13 +19,25 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 import { useAuthStore } from "@/store/auth.store";
 
+const REVIEWS_LIMIT = 10;
+
 const CampgroundPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const reviewsRef = useRef<HTMLDivElement | null>(null);
+  const shouldScrollToReviews = useRef(false);
 
   const currentUser = useAuthStore((state) => state.user);
 
   const [campground, setCampground] = useState<Campground | null>(null);
+
+  const [reviews, setReviews] = useState<CampgroundReview[]>([]);
+  const [reviewsPage, setReviewsPage] = useState(1);
+  const [totalReviewPages, setTotalReviewPages] = useState(1);
+  const [totalReviews, setTotalReviews] = useState(0);
+
+  const [isReviewsLoading, setIsReviewsLoading] = useState(true);
+  const [reviewsError, setReviewsError] = useState("");
 
   const [rating, setRating] = useState<number | null>(null);
   const [reviewText, setReviewText] = useState("");
@@ -66,12 +83,49 @@ const CampgroundPage = () => {
     fetchCampground();
   }, [id]);
 
+  useEffect(() => {
+    if (!id) return;
+    const fetchReviews = async () => {
+      try {
+        setReviewsError("");
+        setIsReviewsLoading(true);
+        const data = await getReviews(id, reviewsPage, REVIEWS_LIMIT);
+        setReviews(data.data.reviews);
+        setTotalReviews(data.data.totalReviews);
+        setTotalReviewPages(data.data.totalPages);
+      } catch (error) {
+        console.error("Failed to fetch campground reviews:", error);
+        setReviewsError("Failed to fetch campground reviews");
+      } finally {
+        setIsReviewsLoading(false);
+      }
+    };
+    fetchReviews();
+  }, [id, reviewsPage]);
+
+  const handleChangeReviewsPage = (page: number) => {
+    shouldScrollToReviews.current = true;
+    setReviewsPage(page);
+  };
+
+  useEffect(() => {
+    if (isReviewsLoading || !shouldScrollToReviews.current) return;
+    reviewsRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+    shouldScrollToReviews.current = false;
+  }, [isReviewsLoading]);
+
   const calculateAverageRating = (reviews: Campground["reviews"]) => {
     if (reviews.length === 0) {
       return 0;
     }
 
-    const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+    const totalRating = reviews.reduce(
+      (sum, review) => sum + Number(review.rating),
+      0,
+    );
 
     return totalRating / reviews.length;
   };
@@ -100,6 +154,14 @@ const CampgroundPage = () => {
         text: reviewText.trim(),
       });
 
+      if (reviewsPage === 1) {
+        setReviews((previousReviews) =>
+          [data.data, ...previousReviews].slice(0, REVIEWS_LIMIT),
+        );
+      } else {
+        setReviewsPage(1);
+      }
+
       setCampground((previousCampground) => {
         if (!previousCampground) {
           return previousCampground;
@@ -110,11 +172,11 @@ const CampgroundPage = () => {
         return {
           ...previousCampground,
           reviews: updatedReviews,
-          reviewCount: updatedReviews.length,
           averageRating: calculateAverageRating(updatedReviews),
         };
       });
 
+      setTotalReviews((previousTotal) => previousTotal + 1);
       setRating(null);
       setReviewText("");
     } catch (error) {
@@ -145,22 +207,25 @@ const CampgroundPage = () => {
 
       await deleteReview(campground._id, reviewId);
 
+      setReviews((previousReviews) =>
+        previousReviews.filter((review) => review._id !== reviewId),
+      );
+
       setCampground((previousCampground) => {
         if (!previousCampground) {
           return previousCampground;
         }
-
         const updatedReviews = previousCampground.reviews.filter(
           (review) => review._id !== reviewId,
         );
-
         return {
           ...previousCampground,
           reviews: updatedReviews,
-          reviewCount: updatedReviews.length,
           averageRating: calculateAverageRating(updatedReviews),
         };
       });
+
+      setTotalReviews((previousTotal) => Math.max(previousTotal - 1, 0));
 
       if (editedReviewId === reviewId) {
         setEditedReviewId(null);
@@ -211,7 +276,7 @@ const CampgroundPage = () => {
       return;
     }
 
-    const originalReview = campground.reviews.find(
+    const originalReview = reviews.find(
       (review) => review._id === editedReviewId,
     );
 
@@ -238,12 +303,8 @@ const CampgroundPage = () => {
         text: trimmedText,
       });
 
-      setCampground((previousCampground) => {
-        if (!previousCampground) {
-          return previousCampground;
-        }
-
-        const updatedReviews = previousCampground.reviews.map((review) =>
+      setReviews((previousReviews) => {
+        const updatedReviews = previousReviews.map((review) =>
           review._id === editedReviewId
             ? {
                 ...review,
@@ -251,12 +312,23 @@ const CampgroundPage = () => {
               }
             : review,
         );
+        return updatedReviews;
+      });
 
+      setCampground((previousCampground) => {
+        if (!previousCampground) return previousCampground;
+        const updateReview = previousCampground.reviews.map((review) =>
+          review._id === editedReviewId
+            ? {
+                ...review,
+                ...data.data,
+              }
+            : review,
+        );
         return {
           ...previousCampground,
-          reviews: updatedReviews,
-          reviewCount: updatedReviews.length,
-          averageRating: calculateAverageRating(updatedReviews),
+          reviews: updateReview,
+          averageRating: calculateAverageRating(updateReview),
         };
       });
 
@@ -364,258 +436,298 @@ const CampgroundPage = () => {
               <p className="leading-7">{campground.description}</p>
             </CardContent>
           </Card>
+          <div ref={reviewsRef}>
+            <Card>
+              <CardHeader>
+                <CardTitle>Reviews</CardTitle>
+              </CardHeader>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Reviews</CardTitle>
-            </CardHeader>
+              <CardContent className="space-y-6">
+                {currentUser ? (
+                  <form
+                    onSubmit={handleCreateReview}
+                    className="space-y-4 rounded-xl border bg-muted/20 p-4"
+                  >
+                    <div>
+                      <p className="mb-2 text-sm font-medium">Your rating</p>
 
-            <CardContent className="space-y-6">
-              {currentUser ? (
-                <form
-                  onSubmit={handleCreateReview}
-                  className="space-y-4 rounded-xl border bg-muted/20 p-4"
-                >
-                  <div>
-                    <p className="mb-2 text-sm font-medium">Your rating</p>
-
-                    <div className="flex gap-1">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <button
-                          key={star}
-                          type="button"
-                          onClick={() => setRating(star)}
-                          disabled={isPostingReview}
-                          className="rounded-md p-1 transition-transform hover:scale-110 disabled:cursor-not-allowed disabled:opacity-50"
-                          aria-label={`Rate ${star} out of 5`}
-                        >
-                          <Star
-                            className={
-                              star <= (rating ?? 0)
-                                ? "size-7 fill-yellow-400 text-yellow-400"
-                                : "size-7 text-muted-foreground"
-                            }
-                          />
-                        </button>
-                      ))}
+                      <div className="flex gap-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => setRating(star)}
+                            disabled={isPostingReview}
+                            className="rounded-md p-1 transition-transform hover:scale-110 disabled:cursor-not-allowed disabled:opacity-50"
+                            aria-label={`Rate ${star} out of 5`}
+                          >
+                            <Star
+                              className={
+                                star <= (rating ?? 0)
+                                  ? "size-7 fill-yellow-400 text-yellow-400"
+                                  : "size-7 text-muted-foreground"
+                              }
+                            />
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
 
-                  <div>
-                    <label
-                      htmlFor="reviewText"
-                      className="mb-2 block text-sm font-medium"
-                    >
-                      Your review
-                    </label>
+                    <div>
+                      <label
+                        htmlFor="reviewText"
+                        className="mb-2 block text-sm font-medium"
+                      >
+                        Your review
+                      </label>
 
-                    <textarea
-                      id="reviewText"
-                      value={reviewText}
-                      onChange={(event) => setReviewText(event.target.value)}
-                      placeholder="Share your experience..."
-                      disabled={isPostingReview}
-                      className="min-h-28 w-full resize-y rounded-md border bg-background px-3 py-2 outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                      required
-                    />
-                  </div>
+                      <textarea
+                        id="reviewText"
+                        value={reviewText}
+                        onChange={(event) => setReviewText(event.target.value)}
+                        placeholder="Share your experience..."
+                        disabled={isPostingReview}
+                        className="min-h-28 w-full resize-y rounded-md border bg-background px-3 py-2 outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                        required
+                      />
+                    </div>
 
-                  {reviewError && (
-                    <p className="text-sm text-destructive">{reviewError}</p>
-                  )}
+                    {reviewError && (
+                      <p className="text-sm text-destructive">{reviewError}</p>
+                    )}
 
-                  <div className="flex justify-end">
+                    <div className="flex justify-end">
+                      <Button
+                        type="submit"
+                        disabled={
+                          isPostingReview ||
+                          rating === null ||
+                          !reviewText.trim()
+                        }
+                      >
+                        {isPostingReview ? "Posting..." : "Post review"}
+                      </Button>
+                    </div>
+                  </form>
+                ) : (
+                  <div className="rounded-xl border bg-muted/20 p-4">
+                    <p className="text-sm text-muted-foreground">
+                      Log in to add a review.
+                    </p>
+
                     <Button
-                      type="submit"
-                      disabled={
-                        isPostingReview || rating === null || !reviewText.trim()
-                      }
+                      type="button"
+                      variant="outline"
+                      className="mt-3"
+                      onClick={() => navigate("/login")}
                     >
-                      {isPostingReview ? "Posting..." : "Post review"}
+                      Log in
                     </Button>
                   </div>
-                </form>
-              ) : (
-                <div className="rounded-xl border bg-muted/20 p-4">
-                  <p className="text-sm text-muted-foreground">
-                    Log in to add a review.
+                )}
+
+                {deleteReviewError && (
+                  <p className="text-sm text-destructive">
+                    {deleteReviewError}
                   </p>
+                )}
 
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="mt-3"
-                    onClick={() => navigate("/login")}
-                  >
-                    Log in
-                  </Button>
-                </div>
-              )}
-
-              {deleteReviewError && (
-                <p className="text-sm text-destructive">{deleteReviewError}</p>
-              )}
-
-              {campground.reviews.length === 0 ? (
-                <p className="text-muted-foreground">No reviews yet.</p>
-              ) : (
-                <div className="space-y-4">
-                  {campground.reviews.map((review) =>
-                    editedReviewId === review._id ? (
-                      <form
-                        key={review._id}
-                        onSubmit={handleUpdateReview}
-                        className="space-y-4 rounded-xl border bg-muted/20 p-4"
-                      >
-                        <div>
-                          <p className="mb-2 text-sm font-medium">Rating</p>
-
-                          <div className="flex gap-1">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <button
-                                key={star}
-                                type="button"
-                                onClick={() => setEditedRating(star)}
-                                disabled={isUpdatingReview}
-                                className="rounded-md p-1 transition-transform hover:scale-110 disabled:cursor-not-allowed disabled:opacity-50"
-                                aria-label={`Rate ${star} out of 5`}
-                              >
-                                <Star
-                                  className={
-                                    star <= (editedRating ?? 0)
-                                      ? "size-7 fill-yellow-400 text-yellow-400"
-                                      : "size-7 text-muted-foreground"
-                                  }
-                                />
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div>
-                          <label
-                            htmlFor={`edit-text-${review._id}`}
-                            className="mb-2 block text-sm font-medium"
-                          >
-                            Review
-                          </label>
-
-                          <textarea
-                            id={`edit-text-${review._id}`}
-                            value={editedReviewText}
-                            onChange={(event) =>
-                              setEditedReviewText(event.target.value)
-                            }
-                            disabled={isUpdatingReview}
-                            className="min-h-24 w-full resize-y rounded-md border bg-background px-3 py-2 outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                            required
-                          />
-                        </div>
-
-                        {updateReviewError && (
-                          <p className="text-sm text-destructive">
-                            {updateReviewError}
-                          </p>
-                        )}
-
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            disabled={isUpdatingReview}
-                            onClick={handleCancelEditing}
-                          >
-                            Cancel
-                          </Button>
-
-                          <Button
-                            type="submit"
-                            disabled={
-                              isUpdatingReview ||
-                              editedRating === null ||
-                              !editedReviewText.trim()
-                            }
-                          >
-                            {isUpdatingReview ? "Saving..." : "Save changes"}
-                          </Button>
-                        </div>
-                      </form>
-                    ) : (
-                      <article
-                        key={review._id}
-                        className="rounded-xl border p-4"
-                      >
-                        <div className="mb-3 flex items-start justify-between gap-4">
+                {isReviewsLoading ? (
+                  <p className="text-muted-foreground">Loading reviews...</p>
+                ) : reviewsError ? (
+                  <p className="text-sm text-destructive">{reviewsError}</p>
+                ) : reviews.length === 0 ? (
+                  <p className="text-muted-foreground">No reviews yet.</p>
+                ) : (
+                  <div className="space-y-4">
+                    {reviews.map((review) =>
+                      editedReviewId === review._id ? (
+                        <form
+                          key={review._id}
+                          onSubmit={handleUpdateReview}
+                          className="space-y-4 rounded-xl border bg-muted/20 p-4"
+                        >
                           <div>
-                            <p className="font-semibold">
-                              {review.author.username}
-                            </p>
+                            <p className="mb-2 text-sm font-medium">Rating</p>
 
-                            <div
-                              className="mt-1 flex"
-                              aria-label={`${review.rating} out of 5 stars`}
-                            >
+                            <div className="flex gap-1">
                               {[1, 2, 3, 4, 5].map((star) => (
-                                <Star
+                                <button
                                   key={star}
-                                  className={
-                                    star <= review.rating
-                                      ? "size-4 fill-yellow-400 text-yellow-400"
-                                      : "size-4 text-muted-foreground"
-                                  }
-                                />
+                                  type="button"
+                                  onClick={() => setEditedRating(star)}
+                                  disabled={isUpdatingReview}
+                                  className="rounded-md p-1 transition-transform hover:scale-110 disabled:cursor-not-allowed disabled:opacity-50"
+                                  aria-label={`Rate ${star} out of 5`}
+                                >
+                                  <Star
+                                    className={
+                                      star <= (editedRating ?? 0)
+                                        ? "size-7 fill-yellow-400 text-yellow-400"
+                                        : "size-7 text-muted-foreground"
+                                    }
+                                  />
+                                </button>
                               ))}
                             </div>
                           </div>
 
-                          {review.author._id === currentUser?._id && (
-                            <div className="flex items-center">
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                onClick={() =>
-                                  handleStartEditing(
-                                    review._id,
-                                    review.text,
-                                    review.rating,
-                                  )
-                                }
-                                aria-label="Edit review"
-                                className="text-muted-foreground hover:text-foreground"
-                              >
-                                <Pencil className="size-4" />
-                              </Button>
+                          <div>
+                            <label
+                              htmlFor={`edit-text-${review._id}`}
+                              className="mb-2 block text-sm font-medium"
+                            >
+                              Review
+                            </label>
 
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleDeleteReview(review._id)}
-                                disabled={deletingReviewId === review._id}
-                                aria-label="Delete review"
-                                className="text-muted-foreground hover:text-destructive"
-                              >
-                                <Trash2 className="size-4" />
-                              </Button>
-                            </div>
+                            <textarea
+                              id={`edit-text-${review._id}`}
+                              value={editedReviewText}
+                              onChange={(event) =>
+                                setEditedReviewText(event.target.value)
+                              }
+                              disabled={isUpdatingReview}
+                              className="min-h-24 w-full resize-y rounded-md border bg-background px-3 py-2 outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                              required
+                            />
+                          </div>
+
+                          {updateReviewError && (
+                            <p className="text-sm text-destructive">
+                              {updateReviewError}
+                            </p>
                           )}
-                        </div>
 
-                        <p>{review.text}</p>
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              disabled={isUpdatingReview}
+                              onClick={handleCancelEditing}
+                            >
+                              Cancel
+                            </Button>
 
-                        <small className="mt-2 block text-muted-foreground">
-                          {new Date(
-                            review.updatedAt ?? review.createdAt,
-                          ).toLocaleString()}
-                        </small>
-                      </article>
-                    ),
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                            <Button
+                              type="submit"
+                              disabled={
+                                isUpdatingReview ||
+                                editedRating === null ||
+                                !editedReviewText.trim()
+                              }
+                            >
+                              {isUpdatingReview ? "Saving..." : "Save changes"}
+                            </Button>
+                          </div>
+                        </form>
+                      ) : (
+                        <article
+                          key={review._id}
+                          className="rounded-xl border p-4"
+                        >
+                          <div className="mb-3 flex items-start justify-between gap-4">
+                            <div>
+                              <p className="font-semibold">
+                                {review.author.username}
+                              </p>
+
+                              <div
+                                className="mt-1 flex"
+                                aria-label={`${review.rating} out of 5 stars`}
+                              >
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <Star
+                                    key={star}
+                                    className={
+                                      star <= review.rating
+                                        ? "size-4 fill-yellow-400 text-yellow-400"
+                                        : "size-4 text-muted-foreground"
+                                    }
+                                  />
+                                ))}
+                              </div>
+                            </div>
+
+                            {review.author._id === currentUser?._id && (
+                              <div className="flex items-center">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() =>
+                                    handleStartEditing(
+                                      review._id,
+                                      review.text,
+                                      review.rating,
+                                    )
+                                  }
+                                  aria-label="Edit review"
+                                  className="text-muted-foreground hover:text-foreground"
+                                >
+                                  <Pencil className="size-4" />
+                                </Button>
+
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleDeleteReview(review._id)}
+                                  disabled={deletingReviewId === review._id}
+                                  aria-label="Delete review"
+                                  className="text-muted-foreground hover:text-destructive"
+                                >
+                                  <Trash2 className="size-4" />
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+
+                          <p>{review.text}</p>
+
+                          <small className="mt-2 block text-muted-foreground">
+                            {new Date(
+                              review.updatedAt ?? review.createdAt,
+                            ).toLocaleString()}
+                          </small>
+                        </article>
+                      ),
+                    )}
+                    {totalReviewPages > 1 && (
+                      <div className="flex items-center justify-between border-t pt-4">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          disabled={reviewsPage === 1 || isReviewsLoading}
+                          onClick={() =>
+                            handleChangeReviewsPage(reviewsPage - 1)
+                          }
+                        >
+                          Previous
+                        </Button>
+
+                        <span className="text-sm text-muted-foreground">
+                          Page {reviewsPage} of {totalReviewPages}
+                        </span>
+
+                        <Button
+                          type="button"
+                          variant="outline"
+                          disabled={
+                            reviewsPage === totalReviewPages || isReviewsLoading
+                          }
+                          onClick={() =>
+                            handleChangeReviewsPage(reviewsPage + 1)
+                          }
+                        >
+                          Next
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
         <aside className="space-y-6">
@@ -680,10 +792,7 @@ const CampgroundPage = () => {
               </div>
 
               <p className="text-sm text-muted-foreground">
-                {campground.reviewCount ?? campground.reviews.length}{" "}
-                {(campground.reviewCount ?? campground.reviews.length) === 1
-                  ? "review"
-                  : "reviews"}
+                {totalReviews} {totalReviews === 1 ? "review" : "reviews"}
               </p>
             </CardContent>
           </Card>

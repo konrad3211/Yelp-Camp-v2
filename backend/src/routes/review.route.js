@@ -4,6 +4,7 @@ import catchAsync from "../lib/catchAsync.js";
 import {
   createReview,
   deleteReview,
+  getReviews,
   updateReview,
 } from "../controllers/review.controller.js";
 import { isReviewAuthor } from "../middleware/isReviewAuthor.middleware.js";
@@ -13,7 +14,10 @@ import {
   updateReviewSchema,
 } from "../schemas/review.schema.js";
 
+//dzieki temu mozemy przeczytac url
 const router = Router({ mergeParams: true });
+
+router.get("/", catchAsync(getReviews));
 
 router.post(
   "/",

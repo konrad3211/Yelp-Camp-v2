@@ -1,3 +1,5 @@
+import type { CampgroundReview } from "./campground";
+
 export type CreateReviewData = {
   rating: number;
   text: string;
@@ -28,4 +30,18 @@ export type CreateReviewResponse = {
 export type DeleteReviewResponse = {
   success: boolean;
   message: string;
+};
+
+export type GetReviewsResponse = {
+  success: boolean;
+  message: string;
+  data: {
+    reviews: CampgroundReview[];
+    page: number;
+    limit: number;
+    totalReviews: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+  };
 };

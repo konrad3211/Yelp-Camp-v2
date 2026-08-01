@@ -2,9 +2,10 @@ import type {
   CreateReviewData,
   CreateReviewResponse,
   DeleteReviewResponse,
+  GetReviewsResponse,
   Review,
 } from "@/types/review";
-import { api } from "./axios";
+import { api, publicApi } from "./axios";
 
 type updateData = {
   rating: number;
@@ -44,5 +45,23 @@ export const updateReview = async (
     `/campgrounds/${campgroundId}/reviews/${reviewId}`,
     updateData,
   );
+  return response.data;
+};
+
+export const getReviews = async (
+  campgroundId: string,
+  page = 1,
+  limit = 10,
+) => {
+  const response = await publicApi.get<GetReviewsResponse>(
+    `/campgrounds/${campgroundId}/reviews`,
+    {
+      params: {
+        page,
+        limit,
+      },
+    },
+  );
+
   return response.data;
 };
