@@ -11,6 +11,15 @@ export const createReview = async (req, res) => {
     throw new AppError("Campground not found", 404);
   }
 
+  const exisitngReview = await Review.exists({
+    _id: { $in: campground.reviews },
+    author: req.user._id,
+  });
+
+  if (exisitngReview) {
+    throw new AppError("You already have a review in this campground", 409);
+  }
+
   const review = await Review.create({
     author: req.user._id,
     ...data,

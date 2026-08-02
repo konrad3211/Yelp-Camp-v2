@@ -4,7 +4,7 @@ import { Review } from "../models/review.model.js";
 import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
 import { AppError } from "../utils/appError.js";
 
-const MAX_CAMPGROUND_IMAGES = 5;
+const MAX_CAMPGROUND_IMAGES = 6;
 
 export const getCampgrounds = async (req, res) => {
   const campgrounds = await Campground.find({})
@@ -45,11 +45,10 @@ export const getCampground = async (req, res) => {
   });
 };
 export const createCampground = async (req, res) => {
-  const { title, location, price, description } = req.body;
   const userId = req.user._id;
   const files = req.files || [];
   //data jest z validate. Sa tam juz po walidacji informacje.
-  const data = req.body;
+  const { latitude, longitude, ...data } = req.body;
 
   if (files.length === 0) {
     throw new AppError("At least one image is required", 400);
@@ -87,6 +86,10 @@ export const createCampground = async (req, res) => {
 
   const newCampground = await Campground.create({
     ...data,
+    geometry: {
+      type: "Point",
+      coordinates: [longitude, latitude],
+    },
     images: uploadedImages,
     author: userId,
   });
@@ -121,9 +124,18 @@ export const createCampground = async (req, res) => {
 //*tutaj data mamy juz z validate middleware, wiec tak mozna uproscic ten kontroler
 export const updateCampground = async (req, res) => {
   const campground = req.campground;
-  const data = req.body;
+  const { latitude, longitude, ...data } = req.body;
 
   campground.set(data);
+
+  //zmień współrzędne tylko wtedy, gdy klient przesłał jednocześnie latitude i longitude.
+  if (latitude !== undefined && longitude !== undefined) {
+    campground.geometry = {
+      type: "Point",
+      coordinates: [longitude, latitude],
+    };
+  }
+
   await campground.save();
 
   res.status(200).json({

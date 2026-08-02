@@ -39,6 +39,18 @@ const CampgroundSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    geometry: {
+      type: {
+        type: String,
+        enum: ["Point"],
+        required: true,
+        default: "Point",
+      },
+      coordinates: {
+        type: [Number],
+        required: true,
+      },
+    },
     reviews: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -55,6 +67,9 @@ const CampgroundSchema = new mongoose.Schema(
     timestamps: true,
   },
 );
+
+//indeks grupuje i porządkuje dokumenty według ich położenia geograficznego. Dzieki temu mozemy pozniej wyszukiwac innych obiektow w poblizu np. kilku km.
+CampgroundSchema.index({ geometry: "2dsphere" });
 
 CampgroundSchema.virtual("averageRating").get(function () {
   if (!this.reviews || this.reviews.length === 0) return 0;

@@ -27,12 +27,18 @@ export type CampgroundReview = {
   updatedAt: string;
 };
 
+export type CampgroundGeometry = {
+  type: "Point";
+  coordinates: [number, number];
+};
+
 export type Campground = {
   _id: string;
   title: string;
   location: string;
   price: number;
   description: string;
+  geometry?: CampgroundGeometry;
   reviews: CampgroundReview[];
   images: CampgroundImage[];
   author: CampgroundAuthor;

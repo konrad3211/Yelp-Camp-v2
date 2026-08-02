@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 import { useAuthStore } from "@/store/auth.store";
+import CampgroundMap from "@/components/CampgroundMap";
 
 const REVIEWS_LIMIT = 10;
 
@@ -440,8 +441,6 @@ const CampgroundPage = () => {
     return <p>Campground not found.</p>;
   }
 
-  const mainImage = campground.images[0];
-
   const authorInitials = campground.author.fullName
     .split(" ")
     .map((word) => word[0])
@@ -458,7 +457,7 @@ const CampgroundPage = () => {
       <div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
         <div className="space-y-6">
           {campground.images.length > 0 ? (
-            <div className="grid h-[520px] grid-cols-1 gap-2 overflow-hidden rounded-xl md:grid-cols-4 md:grid-rows-2">
+            <div className="grid h-130 grid-cols-1 gap-2 overflow-hidden rounded-xl md:grid-cols-4 md:grid-rows-2">
               <button
                 type="button"
                 onClick={() => handleOpenLightbox(0)}
@@ -529,6 +528,23 @@ const CampgroundPage = () => {
               <p className="leading-7">{campground.description}</p>
             </CardContent>
           </Card>
+          {campground.geometry?.coordinates?.length === 2 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Location</CardTitle>
+              </CardHeader>
+
+              <CardContent className="space-y-4">
+                <p className="text-muted-foreground">{campground.location}</p>
+
+                <CampgroundMap
+                  title={campground.title}
+                  location={campground.location}
+                  coordinates={campground.geometry.coordinates}
+                />
+              </CardContent>
+            </Card>
+          )}
 
           <div ref={reviewsRef} className="scroll-mt-24">
             <Card>
@@ -896,7 +912,7 @@ const CampgroundPage = () => {
 
       {lightboxImageIndex !== null && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
+          className="fixed inset-0 z-999999999 flex items-center justify-center bg-black/90 p-4"
           role="dialog"
           aria-modal="true"
           aria-label="Image gallery"
