@@ -3,6 +3,7 @@ import { Campground } from "../models/campground.model.js";
 import { Review } from "../models/review.model.js";
 import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
 import { AppError } from "../utils/appError.js";
+import { geocodeLocation } from "../utils/geocodeLocation.js";
 
 const MAX_CAMPGROUND_IMAGES = 6;
 
@@ -101,47 +102,50 @@ export const createCampground = async (req, res) => {
   });
 };
 
-// export const updateCampground = async (req, res) => {
-//   const campground = req.campground;
-//   const allowedFields = ["title", "location", "description", "price"];
-//   const updates = {};
-
-//   for (const field of allowedFields) {
-//     if (req.body[field] !== undefined) {
-//       updates[field] = req.body[field];
-//     }
-//   }
-//   campground.set(updates);
-//   await campground.save();
-
-//   res.status(200).json({
-//     success: true,
-//     message: "Campground has been updated successfully",
-//     campground,
-//   });
-// };
-
-//*tutaj data mamy juz z validate middleware, wiec tak mozna uproscic ten kontroler
 export const updateCampground = async (req, res) => {
   const campground = req.campground;
-  const { latitude, longitude, ...data } = req.body;
+  const data = req.body;
 
-  campground.set(data);
+  const addressChanged =
+    data.city !== undefined ||
+    data.street !== undefined ||
+    data.houseNumber !== undefined;
 
-  //zmień współrzędne tylko wtedy, gdy klient przesłał jednocześnie latitude i longitude.
-  if (latitude !== undefined && longitude !== undefined) {
+  if (addressChanged) {
+    const city = data.city ?? campground.city;
+    const street = data.street ?? campground.street;
+    const houseNumber = data.houseNumber ?? campground.houseNumber;
+
+    if (!city || !street || !houseNumber) {
+      throw new AppError("City, street and house number are required", 400);
+    }
+
+    const geocodedLocation = await geocodeLocation({
+      city,
+      street,
+      houseNumber,
+    });
+
+    if (!geocodedLocation) {
+      throw new AppError("Location could not be found", 400);
+    }
+
+    data.location = `${street} ${houseNumber}, ${city}`;
+
     campground.geometry = {
       type: "Point",
-      coordinates: [longitude, latitude],
+      coordinates: [geocodedLocation.longitude, geocodedLocation.latitude],
     };
   }
+
+  campground.set(data);
 
   await campground.save();
 
   res.status(200).json({
     success: true,
     message: "Campground has been updated successfully",
-    campground,
+    data: campground,
   });
 };
 

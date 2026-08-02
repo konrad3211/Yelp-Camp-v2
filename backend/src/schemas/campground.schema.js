@@ -7,11 +7,23 @@ export const createCampgroundSchema = z.object({
     .min(3, "Title must be at least 3 characters")
     .max(100, "Title can't be longer than 100 characters"),
 
-  location: z
-    .string({ error: "Location is required" })
+  city: z
+    .string({ error: "City is required" })
     .trim()
-    .min(2, "Location is required")
-    .max(100, "Location can't be longer than 100 characters"),
+    .min(2, "City is required")
+    .max(100, "City can't be longer than 100 characters"),
+
+  street: z
+    .string({ error: "Street is required" })
+    .trim()
+    .min(2, "Street is required")
+    .max(100, "Street can't be longer than 100 characters"),
+
+  houseNumber: z
+    .string({ error: "House number is required" })
+    .trim()
+    .min(2, "House number is required")
+    .max(100, "House number can't be longer than 100 characters"),
 
   price: z.coerce
     .number({ error: "Price is required" })

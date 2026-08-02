@@ -22,9 +22,22 @@ const CampgroundSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    city: {
+      type: String,
+      trim: true,
+    },
+    street: {
+      type: String,
+      trim: true,
+    },
+    houseNumber: {
+      type: String,
+      trim: true,
+    },
     location: {
       type: String,
       required: true,
+      trim: true,
     },
     price: {
       type: Number,
