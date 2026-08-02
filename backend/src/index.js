@@ -56,7 +56,7 @@ app.use((err, req, res, next) => {
     if (err.code === "LIMIT_FILE_COUNT") {
       return res.status(400).json({
         success: false,
-        message: "Too many files. You can upload a maximum of 5 files.",
+        message: "Too many files. You can upload a maximum of 6 files.",
       });
     }
 

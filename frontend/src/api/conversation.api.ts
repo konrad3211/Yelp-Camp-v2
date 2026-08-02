@@ -59,3 +59,18 @@ export const createConversation = async (campgroundId: string) => {
 
   return response.data;
 };
+
+type StartConversationData = {
+  text: string;
+};
+
+export const startConversation = async (
+  campgroundId: string,
+  data: StartConversationData,
+) => {
+  const response = await api.post(
+    `/campgrounds/${campgroundId}/conversations`,
+    data,
+  );
+  return response;
+};

@@ -2,11 +2,11 @@ import { Router } from "express";
 import { protect } from "../middleware/auth.middleware.js";
 import catchAsync from "../lib/catchAsync.js";
 import {
-  createConversation,
   createMessage,
   getConversationMessages,
   getConversations,
   markMessagesAsRead,
+  startConversation,
 } from "../controllers/conversation.controller.js";
 import { isConversationParticipant } from "../middleware/conversation.middleware.js";
 import { validate } from "../middleware/validate.middleware.js";
@@ -28,7 +28,7 @@ router.post(
   "/",
   protect,
   validate(createConversationSchema),
-  catchAsync(createConversation),
+  catchAsync(startConversation),
 );
 router.post(
   "/:id/messages",

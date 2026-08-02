@@ -3,8 +3,52 @@ import { Conversation } from "../models/conversation.model.js";
 import { Message } from "../models/message.model.js";
 import { AppError } from "../utils/appError.js";
 
-export const createConversation = async (req, res) => {
-  const { campgroundId } = req.body;
+// export const createConversation = async (req, res) => {
+//   const { campgroundId } = req.body;
+//   const userId = req.user._id;
+
+//   const campground = await Campground.findById(campgroundId);
+
+//   if (!campground) {
+//     throw new AppError("Campground not found", 404);
+//   }
+
+//   const ownerId = campground.author;
+
+//   if (ownerId.equals(userId)) {
+//     throw new AppError("You cannot start a conversation with yourself", 400);
+//   }
+
+//   let conversation = await Conversation.findOne({
+//     campground: campgroundId,
+//     participants: {
+//       $all: [userId, ownerId],
+//     },
+//   });
+
+//   if (!conversation) {
+//     conversation = await Conversation.create({
+//       campground: campgroundId,
+//       participants: [userId, ownerId],
+//     });
+
+//     return res.status(201).json({
+//       success: true,
+//       message: "Conversation has been created successfully",
+//       data: conversation,
+//     });
+//   }
+
+//   res.status(200).json({
+//     success: true,
+//     message: "Conversation already exists",
+//     data: conversation,
+//   });
+// };
+
+export const startConversation = async (req, res) => {
+  const { campgroundId } = req.params;
+  const { text } = req.body;
   const userId = req.user._id;
 
   const campground = await Campground.findById(campgroundId);
@@ -31,18 +75,27 @@ export const createConversation = async (req, res) => {
       campground: campgroundId,
       participants: [userId, ownerId],
     });
-
-    return res.status(201).json({
-      success: true,
-      message: "Conversation has been created successfully",
-      data: conversation,
-    });
   }
 
-  res.status(200).json({
+  const message = await Message.create({
+    conversation: conversation._id,
+    sender: userId,
+    text,
+  });
+
+  conversation.lastMessage = message._id;
+
+  await conversation.save();
+
+  await message.populate("sender", "username fullName imageUrl");
+
+  res.status(201).json({
     success: true,
-    message: "Conversation already exists",
-    data: conversation,
+    message: "Conversation started successfully",
+    data: {
+      conversation,
+      message,
+    },
   });
 };
 

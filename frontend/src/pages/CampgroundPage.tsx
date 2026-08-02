@@ -400,7 +400,36 @@ const CampgroundPage = () => {
     }
   };
 
-  const handleContactOwner = async () => {
+  // const handleContactOwner = async () => {
+  //   if (!campground) {
+  //     return;
+  //   }
+
+  //   if (!currentUser) {
+  //     navigate("/login", {
+  //       state: {
+  //         campgroundId: campground._id,
+  //         action: "contactOwner",
+  //       },
+  //     });
+
+  //     return;
+  //   }
+
+  //   if (currentUser._id === campground.author._id) {
+  //     return;
+  //   }
+
+  //   try {
+  //     const data = await createConversation(campground._id);
+
+  //     navigate(`/conversations/${data.data._id}`);
+  //   } catch (error) {
+  //     console.error("Failed to create conversation:", error);
+  //   }
+  // };
+
+  const handleContactOwner = () => {
     if (!campground) {
       return;
     }
@@ -420,13 +449,12 @@ const CampgroundPage = () => {
       return;
     }
 
-    try {
-      const data = await createConversation(campground._id);
-
-      navigate(`/conversations/${data.data._id}`);
-    } catch (error) {
-      console.error("Failed to create conversation:", error);
-    }
+    navigate(`/conversations/new`, {
+      state: {
+        campgroundId: campground._id,
+        ownerId: campground.author._id,
+      },
+    });
   };
 
   if (isLoading) {

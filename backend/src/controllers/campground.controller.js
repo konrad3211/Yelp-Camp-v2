@@ -4,6 +4,7 @@ import { Review } from "../models/review.model.js";
 import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
 import { AppError } from "../utils/appError.js";
 import { geocodeLocation } from "../utils/geocodeLocation.js";
+import { Conversation } from "../models/conversation.model.js";
 
 const MAX_CAMPGROUND_IMAGES = 6;
 
@@ -48,8 +49,8 @@ export const getCampground = async (req, res) => {
 export const createCampground = async (req, res) => {
   const userId = req.user._id;
   const files = req.files || [];
-  //data jest z validate. Sa tam juz po walidacji informacje.
-  const { latitude, longitude, ...data } = req.body;
+
+  const { street, city, houseNumber, ...data } = req.body;
 
   if (files.length === 0) {
     throw new AppError("At least one image is required", 400);
@@ -70,11 +71,17 @@ export const createCampground = async (req, res) => {
     );
   }
 
-  //Promise.all
-  //czeka, aż wszystkie Promise’y się zakończą,
-  //zwraca tablicę ich wyników.
+  const geocodedLocation = await geocodeLocation({
+    city,
+    street,
+    houseNumber,
+  });
+
+  if (!geocodedLocation) {
+    throw new AppError("Location could not be found", 400);
+  }
+
   const uploadedImages = await Promise.all(
-    //map przechodzi po kazdym elemencie tablicy
     files.map(async (file) => {
       const result = await uploadToCloudinary(file);
 
@@ -85,11 +92,17 @@ export const createCampground = async (req, res) => {
     }),
   );
 
+  const location = `${street} ${houseNumber}, ${city}`;
+
   const newCampground = await Campground.create({
     ...data,
+    city,
+    street,
+    houseNumber,
+    location,
     geometry: {
       type: "Point",
-      coordinates: [longitude, latitude],
+      coordinates: [geocodedLocation.longitude, geocodedLocation.latitude],
     },
     images: uploadedImages,
     author: userId,
@@ -98,7 +111,7 @@ export const createCampground = async (req, res) => {
   res.status(201).json({
     success: true,
     message: "Campground has been created successfully",
-    campground: newCampground,
+    data: newCampground,
   });
 };
 
@@ -234,6 +247,7 @@ export const deleteCampground = async (req, res) => {
     ),
   );
   await Review.deleteMany({ _id: { $in: campground.reviews } });
+  await Conversation.deleteMany({ campground: { $in: campground._id } });
   await campground.deleteOne();
 
   res.status(200).json({

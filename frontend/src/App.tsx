@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import type { Message } from "./types/message";
 import AppLayout from "@/layouts/AppLayout";
 import CampgroundPage from "./pages/CampgroundPage";
+import NewConversationPage from "./pages/NewConversationPage";
 
 const App = () => {
   const user = useAuthStore((state) => state.user);
@@ -96,6 +97,8 @@ const App = () => {
             user ? <ConversationsPage /> : <Navigate to="/login" replace />
           }
         />
+
+        <Route path="/conversations/new" element={<NewConversationPage />} />
 
         <Route
           path="/conversations/:id"

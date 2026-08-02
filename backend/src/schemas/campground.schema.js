@@ -35,16 +35,6 @@ export const createCampgroundSchema = z.object({
     .trim()
     .min(10, "Description must be at least 10 characters")
     .max(2000, "Description can't be longer than 2000 characters"),
-
-  latitude: z.coerce
-    .number()
-    .min(-90, "Latitude must ba at least -90")
-    .max(90, "Latitude must ba at most 90"),
-
-  longitude: z.coerce
-    .number()
-    .min(-180, "Longitude must be at least -180")
-    .max(180, "Longitude must be at most 180"),
 });
 
 export const updateCampgroundSchema = createCampgroundSchema
