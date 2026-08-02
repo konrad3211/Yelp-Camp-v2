@@ -1,7 +1,13 @@
 import { useEffect, useRef, useState, type SubmitEventHandler } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { Pencil, Star, Trash2 } from "lucide-react";
-
+import {
+  ChevronLeft,
+  ChevronRight,
+  Pencil,
+  Star,
+  Trash2,
+  X,
+} from "lucide-react";
 import { getCampground } from "@/api/campground.api";
 import { createConversation } from "@/api/conversation.api";
 import {
@@ -30,6 +36,9 @@ const CampgroundPage = () => {
   const currentUser = useAuthStore((state) => state.user);
 
   const [campground, setCampground] = useState<Campground | null>(null);
+  const [lightboxImageIndex, setLightboxImageIndex] = useState<number | null>(
+    null,
+  );
 
   const [reviews, setReviews] = useState<CampgroundReview[]>([]);
   const [reviewsPage, setReviewsPage] = useState(1);
@@ -116,6 +125,52 @@ const CampgroundPage = () => {
     });
     shouldScrollToReviews.current = false;
   }, [isReviewsLoading]);
+
+  useEffect(() => {
+    if (lightboxImageIndex === null) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        handleCloseLightbox();
+      }
+      if (event.key === "ArrowLeft") {
+        handlePreviousImage();
+      }
+
+      if (event.key === "ArrowRight") {
+        handleNextImage();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [lightboxImageIndex, campground?.images.length]);
+
+  const handleOpenLightbox = (imageIndex: number) => {
+    setLightboxImageIndex(imageIndex);
+  };
+
+  const handleCloseLightbox = () => {
+    setLightboxImageIndex(null);
+  };
+
+  const handlePreviousImage = () => {
+    setLightboxImageIndex((previousIndex) => {
+      if (previousIndex === null) return null;
+      if (previousIndex === 0) {
+        return campground.images.length - 1;
+      }
+      return previousIndex - 1;
+    });
+  };
+
+  const handleNextImage = () => {
+    setLightboxImageIndex((previousIndex) => {
+      if (previousIndex === null) return null;
+      if (previousIndex === campground.images.length - 1) return 0;
+      return previousIndex + 1;
+    });
+  };
 
   const calculateAverageRating = (reviews: Campground["reviews"]) => {
     if (reviews.length === 0) {
@@ -402,28 +457,66 @@ const CampgroundPage = () => {
 
       <div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
         <div className="space-y-6">
-          {mainImage ? (
-            <img
-              src={mainImage.url}
-              alt={campground.title}
-              className="h-105 w-full rounded-xl object-cover"
-            />
+          {campground.images.length > 0 ? (
+            <div className="grid h-[520px] grid-cols-1 gap-2 overflow-hidden rounded-xl md:grid-cols-4 md:grid-rows-2">
+              <button
+                type="button"
+                onClick={() => handleOpenLightbox(0)}
+                className="group relative overflow-hidden md:col-span-2 md:row-span-2"
+                aria-label="Open main image"
+              >
+                <img
+                  src={campground.images[0].url}
+                  alt={campground.title}
+                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+              </button>
+
+              {campground.images.slice(1, 4).map((image, index) => {
+                const imageIndex = index + 1;
+
+                return (
+                  <button
+                    key={image._id}
+                    type="button"
+                    onClick={() => handleOpenLightbox(imageIndex)}
+                    className="group relative hidden overflow-hidden md:block"
+                    aria-label={`Open image ${imageIndex + 1}`}
+                  >
+                    <img
+                      src={image.url}
+                      alt={`${campground.title} ${imageIndex + 1}`}
+                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                  </button>
+                );
+              })}
+
+              {campground.images.length > 4 && (
+                <button
+                  type="button"
+                  onClick={() => handleOpenLightbox(4)}
+                  className="group relative hidden overflow-hidden md:block"
+                  aria-label={`Open ${campground.images.length - 4} more photos`}
+                >
+                  <img
+                    src={campground.images[4].url}
+                    alt={`${campground.title} 5`}
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/45 transition-colors group-hover:bg-black/55">
+                    <span className="text-lg font-semibold text-white">
+                      +{campground.images.length - 4}{" "}
+                      {campground.images.length - 4 === 1 ? "photo" : "photos"}
+                    </span>
+                  </div>
+                </button>
+              )}
+            </div>
           ) : (
             <div className="flex h-105 items-center justify-center rounded-xl bg-muted">
               <span className="text-muted-foreground">No image</span>
-            </div>
-          )}
-
-          {campground.images.length > 1 && (
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-              {campground.images.slice(1).map((image) => (
-                <img
-                  key={image._id}
-                  src={image.url}
-                  alt={campground.title}
-                  className="h-36 w-full rounded-lg object-cover"
-                />
-              ))}
             </div>
           )}
 
@@ -436,7 +529,8 @@ const CampgroundPage = () => {
               <p className="leading-7">{campground.description}</p>
             </CardContent>
           </Card>
-          <div ref={reviewsRef}>
+
+          <div ref={reviewsRef} className="scroll-mt-24">
             <Card>
               <CardHeader>
                 <CardTitle>Reviews</CardTitle>
@@ -692,6 +786,7 @@ const CampgroundPage = () => {
                         </article>
                       ),
                     )}
+
                     {totalReviewPages > 1 && (
                       <div className="flex items-center justify-between border-t pt-4">
                         <Button
@@ -798,6 +893,64 @@ const CampgroundPage = () => {
           </Card>
         </aside>
       </div>
+
+      {lightboxImageIndex !== null && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Image gallery"
+          onClick={handleCloseLightbox}
+        >
+          <button
+            type="button"
+            onClick={handleCloseLightbox}
+            className="absolute right-4 top-4 z-10 rounded-full p-2 text-white transition-colors hover:bg-white/10"
+            aria-label="Close gallery"
+          >
+            <X className="size-7" />
+          </button>
+
+          {campground.images.length > 1 && (
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                handlePreviousImage();
+              }}
+              className="absolute left-4 z-10 rounded-full p-2 text-white transition-colors hover:bg-white/10"
+              aria-label="Previous image"
+            >
+              <ChevronLeft className="size-9" />
+            </button>
+          )}
+
+          <img
+            src={campground.images[lightboxImageIndex].url}
+            alt={`${campground.title} ${lightboxImageIndex + 1}`}
+            className="max-h-[90vh] max-w-[90vw] object-contain"
+            onClick={(event) => event.stopPropagation()}
+          />
+
+          {campground.images.length > 1 && (
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                handleNextImage();
+              }}
+              className="absolute right-4 z-10 rounded-full p-2 text-white transition-colors hover:bg-white/10"
+              aria-label="Next image"
+            >
+              <ChevronRight className="size-9" />
+            </button>
+          )}
+
+          <span className="absolute bottom-4 rounded-full bg-black/50 px-3 py-1 text-sm text-white">
+            {lightboxImageIndex + 1} / {campground.images.length}
+          </span>
+        </div>
+      )}
     </section>
   );
 };
