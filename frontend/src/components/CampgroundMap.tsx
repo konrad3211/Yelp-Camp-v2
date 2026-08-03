@@ -11,6 +11,7 @@ const CampgroundMap = ({
   coordinates,
 }: CampgroundMapProps) => {
   const [longitude, latitude] = coordinates;
+  //tutaj zamieniamy miejscami x,y na y,x
   const position: [number, number] = [latitude, longitude];
 
   return (

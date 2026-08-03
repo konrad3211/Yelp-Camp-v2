@@ -36,6 +36,7 @@ export type Campground = {
   _id: string;
   title: string;
   location: string;
+  formattedLocation: string;
   price: number;
   description: string;
   geometry?: CampgroundGeometry;

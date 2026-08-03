@@ -1,6 +1,8 @@
 export const geocodeLocation = async ({ city, street, houseNumber }) => {
   const streetQuery = `${houseNumber} ${street}`.trim();
 
+  //to zamienia obiekt na tekst pasujacy do url
+  // np. street=10+Marii+Skłodowskiej-Curie&city=Głogów&country=Poland
   const searchParams = new URLSearchParams({
     street: streetQuery,
     city,
@@ -21,6 +23,7 @@ export const geocodeLocation = async ({ city, street, houseNumber }) => {
     },
   );
 
+  //gdy response.ok to miescie sie w 200-299 status
   if (!response.ok) {
     throw new AppError("Geocoding service failed", 502);
   }

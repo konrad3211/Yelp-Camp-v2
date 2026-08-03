@@ -400,35 +400,6 @@ const CampgroundPage = () => {
     }
   };
 
-  // const handleContactOwner = async () => {
-  //   if (!campground) {
-  //     return;
-  //   }
-
-  //   if (!currentUser) {
-  //     navigate("/login", {
-  //       state: {
-  //         campgroundId: campground._id,
-  //         action: "contactOwner",
-  //       },
-  //     });
-
-  //     return;
-  //   }
-
-  //   if (currentUser._id === campground.author._id) {
-  //     return;
-  //   }
-
-  //   try {
-  //     const data = await createConversation(campground._id);
-
-  //     navigate(`/conversations/${data.data._id}`);
-  //   } catch (error) {
-  //     console.error("Failed to create conversation:", error);
-  //   }
-  // };
-
   const handleContactOwner = () => {
     if (!campground) {
       return;
@@ -563,7 +534,12 @@ const CampgroundPage = () => {
               </CardHeader>
 
               <CardContent className="space-y-4">
-                <p className="text-muted-foreground">{campground.location}</p>
+                <p
+                  title={campground.formattedLocation ?? campground.location}
+                  className="text-muted-foreground"
+                >
+                  {campground.location}
+                </p>
 
                 <CampgroundMap
                   title={campground.title}

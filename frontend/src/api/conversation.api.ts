@@ -68,9 +68,7 @@ export const startConversation = async (
   campgroundId: string,
   data: StartConversationData,
 ) => {
-  const response = await api.post(
-    `/campgrounds/${campgroundId}/conversations`,
-    data,
-  );
-  return response;
+  const response = await api.post(`/conversations/start/${campgroundId}`, data);
+
+  return response.data;
 };

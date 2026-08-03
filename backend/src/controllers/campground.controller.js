@@ -93,6 +93,7 @@ export const createCampground = async (req, res) => {
   );
 
   const location = `${street} ${houseNumber}, ${city}`;
+  const formattedLocation = geocodedLocation.displayName;
 
   const newCampground = await Campground.create({
     ...data,
@@ -100,6 +101,7 @@ export const createCampground = async (req, res) => {
     street,
     houseNumber,
     location,
+    formattedLocation,
     geometry: {
       type: "Point",
       coordinates: [geocodedLocation.longitude, geocodedLocation.latitude],

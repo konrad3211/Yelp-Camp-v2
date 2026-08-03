@@ -39,6 +39,10 @@ const CampgroundSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    formattedLocation: {
+      type: String,
+      trim: true,
+    },
     price: {
       type: Number,
       required: true,
