@@ -12,6 +12,7 @@ import type { Message } from "./types/message";
 import AppLayout from "@/layouts/AppLayout";
 import CampgroundPage from "./pages/CampgroundPage";
 import NewConversationPage from "./pages/NewConversationPage";
+import FakePaymentPage from "./pages/FakePaymentPage";
 
 const App = () => {
   const user = useAuthStore((state) => state.user);
@@ -113,6 +114,16 @@ const App = () => {
         //replace nie pozwala cofnac do poprzedniej strony w przegladarce
         element={<LoginPage />}
       />
+
+      <Route
+        path="/bookings/:bookingId/payment"
+        element={<FakePaymentPage />}
+      />
+
+      {/* <Route
+        path="/bookings/:bookingId/success"
+        element={<BookingSuccessPage />}
+      /> */}
     </Routes>
   );
 };

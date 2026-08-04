@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 
 type NewConversationLocationState = {
   campgroundId?: string;
-  ownerId?: string;
 };
 
 const NewConversationPage = () => {
@@ -16,13 +15,12 @@ const NewConversationPage = () => {
   const state = location.state as NewConversationLocationState | null;
 
   const campgroundId = state?.campgroundId;
-  const ownerId = state?.ownerId;
 
   const [messageText, setMessageText] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState("");
 
-  if (!campgroundId || !ownerId) {
+  if (!campgroundId) {
     return <Navigate to="/" replace />;
   }
 

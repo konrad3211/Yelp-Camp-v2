@@ -5,13 +5,13 @@ import userRoutes from "./routes/user.route.js";
 import campgroundRoutes from "./routes/campground.route.js";
 import reviewRoutes from "./routes/review.route.js";
 import authRoutes from "./routes/auth.route.js";
+import bookingRouter from "./routes/booking.route.js";
 import conversationRoutes from "./routes/conversation.route.js";
 import cookieParser from "cookie-parser";
 import { initializeSocket } from "./lib/socket.js";
 import { connectDB } from "./lib/db.js";
 import cors from "cors";
 import multer from "multer";
-import { success } from "zod";
 dotenv.config();
 
 const app = express();
@@ -34,6 +34,7 @@ app.use("/api/campgrounds", campgroundRoutes);
 //review route
 app.use("/api/campgrounds/:id/reviews", reviewRoutes);
 app.use("/api/conversations", conversationRoutes);
+app.use("/api/bookings", bookingRouter);
 
 const httpServer = http.createServer(app);
 

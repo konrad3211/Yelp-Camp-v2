@@ -1,7 +1,6 @@
 import { useEffect, useState, type SubmitEventHandler } from "react";
 import { login } from "../api/auth.api";
 import { useLocation, useNavigate } from "react-router-dom";
-import { createConversation } from "@/api/conversation.api";
 import { useAuthStore } from "@/store/auth.store";
 
 const LoginPage = () => {
@@ -12,7 +11,7 @@ const LoginPage = () => {
   // location.state przechowuje informację, jaką akcję użytkownik
   // chciał wykonać przed przejściem na stronę logowania.
   const locationState = location.state as {
-    action?: "contactOwner";
+    action?: "contactOwner" | "createReview";
     campgroundId?: string;
   } | null;
 
@@ -23,8 +22,8 @@ const LoginPage = () => {
 
   //
   useEffect(() => {
-    //!isLoading jest poniewaz bez tego od razu po login() przenosilo by nas do /, a ponizej jest jeszcze kod sprawdzajacy czy nie chcemy utworzyc konwersacji.
-    if (user && !isLoading) {
+    //!isLoading jest poniewaz bez tego od razu po login() przenosilo by nas do /, a ponizej jest jeszcze kod sprawdzajacy czy nie chcemy utworzyc konwersacji
+    if (user && !isLoading && !locationState?.campgroundId) {
       navigate("/", { replace: true });
     }
   }, [user, isLoading, navigate]);
@@ -44,15 +43,27 @@ const LoginPage = () => {
       console.log("You are logged in", data);
 
       if (
+        location.state.action === "createReview" &&
+        locationState.campgroundId
+      ) {
+        navigate(`/campgrounds/${locationState.campgroundId}`, {
+          replace: true,
+          state: {
+            action: "createReview",
+          },
+        });
+        return;
+      }
+
+      if (
         locationState?.action === "contactOwner" &&
         locationState.campgroundId
       ) {
-        const conversation = await createConversation(
-          locationState.campgroundId,
-        );
-
-        navigate(`/conversations/${conversation.data._id}`, {
+        navigate(`/conversations/new`, {
           replace: true,
+          state: {
+            campgroundId: locationState.campgroundId,
+          },
         });
         return;
       }
