@@ -13,6 +13,7 @@ import AppLayout from "@/layouts/AppLayout";
 import CampgroundPage from "./pages/CampgroundPage";
 import NewConversationPage from "./pages/NewConversationPage";
 import FakePaymentPage from "./pages/FakePaymentPage";
+import BookingSuccessPage from "./pages/BookingSuccessPage";
 
 const App = () => {
   const user = useAuthStore((state) => state.user);
@@ -120,10 +121,10 @@ const App = () => {
         element={<FakePaymentPage />}
       />
 
-      {/* <Route
+      <Route
         path="/bookings/:bookingId/success"
         element={<BookingSuccessPage />}
-      /> */}
+      />
     </Routes>
   );
 };

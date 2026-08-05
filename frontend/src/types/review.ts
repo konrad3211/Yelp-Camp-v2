@@ -5,7 +5,7 @@ export type CreateReviewData = {
   text: string;
 };
 
-type reviewAuthor = {
+type ReviewAuthor = {
   _id: string;
   fullName: string;
   username: string;
@@ -14,7 +14,7 @@ type reviewAuthor = {
 
 export type Review = {
   _id: string;
-  author: reviewAuthor;
+  author: ReviewAuthor;
   text: string;
   rating: number;
   createdAt: string;

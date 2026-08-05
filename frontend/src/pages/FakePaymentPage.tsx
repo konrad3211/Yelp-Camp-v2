@@ -1,15 +1,15 @@
 import { getBooking, payForBooking } from "@/api/booking.api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { booking } from "@/types/booking";
+import type { Booking } from "@/types/booking";
 import { Button } from "@base-ui/react";
 import { useEffect, useState } from "react";
-import { Navigate, replace, useNavigate, useParams } from "react-router-dom";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
 
 const FakePaymentPage = () => {
   const { bookingId } = useParams<{ bookingId: string }>();
   const navigate = useNavigate();
 
-  const [booking, setBooking] = useState<booking | null>(null);
+  const [booking, setBooking] = useState<Booking | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isPaying, setIsPaying] = useState(false);

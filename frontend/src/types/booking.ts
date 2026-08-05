@@ -1,12 +1,12 @@
 import type { Campground } from "./campground";
 
-export type createBookingResponse = {
+export type CreateBookingResponse = {
   success: string;
   message: string;
-  data: booking;
+  data: Booking;
 };
 
-export type booking = {
+export type Booking = {
   _id: string;
   campground: Campground;
   user: string;
@@ -19,24 +19,30 @@ export type booking = {
   paymentStatus: "unpaid" | "paid" | "failed" | "refunded";
 };
 
-export type getCampgroundAvailabilityResponse = {
+export type GetCampgroundAvailabilityResponse = {
   success: string;
   data: UnavailableBooking[];
 };
 
-export type getBookingResponse = {
+export type GetBookingResponse = {
   success: string;
-  data: booking;
+  data: Booking;
 };
 
 export type payForBookingResponse = {
   success: string;
   message: string;
-  data: booking;
+  data: Booking;
 };
 
 export type UnavailableBooking = {
   _id: string;
+  checkIn: string;
+  checkOut: string;
+};
+
+export type userBooking = {
+  isPastBooking: boolean;
   checkIn: string;
   checkOut: string;
 };

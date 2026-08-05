@@ -98,6 +98,7 @@ const HomePage = () => {
 
                   <Button
                     render={<Link to={`/campgrounds/${campground._id}`} />}
+                    nativeButton={false}
                   >
                     View
                   </Button>

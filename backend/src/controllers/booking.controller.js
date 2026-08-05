@@ -141,3 +141,32 @@ export const getCampgroundAvailability = async (req, res) => {
     data: bookings,
   });
 };
+
+export const getUserBooking = async (req, res) => {
+  const userId = req.user._id;
+  const { campgroundId } = req.params;
+
+  const userBooking = await Booking.findOne({
+    user: userId,
+    campground: campgroundId,
+    status: "confirmed",
+  }).sort({ createdAt: -1 });
+
+  if (!userBooking) {
+    return res.status(200).json({
+      success: true,
+      data: userBooking,
+    });
+  }
+
+  const data = {
+    isPastBooking: userBooking.checkOut < new Date(),
+    checkOut: userBooking.checkOut,
+    checkIn: userBooking.checkIn,
+  };
+
+  res.status(200).json({
+    success: true,
+    data,
+  });
+};

@@ -16,7 +16,7 @@ export type Conversation = {
   updatedAt: string;
 };
 
-export type getConversationResponse = {
+export type GetConversationResponse = {
   success: boolean;
   message: string;
   conversations: Conversation[];

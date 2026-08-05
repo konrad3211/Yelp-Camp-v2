@@ -1,7 +1,7 @@
 import type {
-  createBookingResponse,
-  getBookingResponse,
-  getCampgroundAvailabilityResponse,
+  CreateBookingResponse,
+  GetBookingResponse,
+  GetCampgroundAvailabilityResponse,
   payForBookingResponse,
 } from "@/types/booking";
 import { api, publicApi } from "./axios";
@@ -12,8 +12,8 @@ type createBookingData = {
 };
 
 export const getCampgroundAvailability = async (campgroundId: string) => {
-  const response = await publicApi.get<getCampgroundAvailabilityResponse>(
-    `/campgrounds/${campgroundId}/availability`,
+  const response = await publicApi.get<GetCampgroundAvailabilityResponse>(
+    `/bookings/campgrounds/${campgroundId}/availability`,
   );
   return response.data;
 };
@@ -22,7 +22,7 @@ export const createBooking = async (
   campgroundId: string,
   data: createBookingData,
 ) => {
-  const response = await api.post<createBookingResponse>(
+  const response = await api.post<CreateBookingResponse>(
     `/bookings/campgrounds/${campgroundId}`,
     data,
   );
@@ -30,7 +30,7 @@ export const createBooking = async (
 };
 
 export const getBooking = async (bookingId: string) => {
-  const response = await api.get<getBookingResponse>(`/bookings/${bookingId}`);
+  const response = await api.get<GetBookingResponse>(`/bookings/${bookingId}`);
   return response.data;
 };
 
@@ -38,5 +38,10 @@ export const payForBooking = async (bookingId: string) => {
   const response = await api.patch<payForBookingResponse>(
     `/bookings/${bookingId}/pay`,
   );
+  return response.data;
+};
+
+export const getUserBooking = async (campgroundId: string) => {
+  const response = await api.get(`/bookings/campgrounds/${campgroundId}`);
   return response.data;
 };

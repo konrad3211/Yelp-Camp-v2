@@ -1,3 +1,4 @@
+import { Booking } from "../models/booking.model.js";
 import { Campground } from "../models/campground.model.js";
 import { Review } from "../models/review.model.js";
 import { AppError } from "../utils/appError.js";
@@ -9,6 +10,23 @@ export const createReview = async (req, res) => {
 
   if (!campground) {
     throw new AppError("Campground not found", 404);
+  }
+
+  const userBooking = await Booking.findOne({
+    campground: campground._id,
+    user: req.user._id,
+    status: "confirmed",
+    paymentStatus: "paid",
+    checkOut: {
+      $lt: new Date(),
+    },
+  });
+
+  if (!userBooking) {
+    throw new AppError(
+      "You can only review a campground after completing a booking",
+      403,
+    );
   }
 
   const exisitngReview = await Review.exists({

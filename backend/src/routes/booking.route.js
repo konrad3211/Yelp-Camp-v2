@@ -8,12 +8,14 @@ import {
   createBooking,
   getBooking,
   getCampgroundAvailability,
+  getUserBooking,
   payForBooking,
 } from "../controllers/booking.controller.js";
 
 import { createBookingSchema } from "../schemas/booking.schema.js";
 
 const router = Router();
+router.get("/campgrounds/:campgroundId", protect, catchAsync(getUserBooking));
 
 router.get(
   "/campgrounds/:campgroundId/availability",
@@ -26,7 +28,6 @@ router.post(
   validate(createBookingSchema),
   catchAsync(createBooking),
 );
-
 router.get("/:bookingId", protect, catchAsync(getBooking));
 
 router.patch("/:bookingId/pay", protect, catchAsync(payForBooking));

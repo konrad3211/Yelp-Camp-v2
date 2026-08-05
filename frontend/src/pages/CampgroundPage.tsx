@@ -8,47 +8,42 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-
 import { getCampground } from "@/api/campground.api";
+import BookingForm from "@/components/bookings/BookingForm";
 import {
   createReview,
   deleteReview,
-  getReviews,
   updateReview,
+  getReviews,
 } from "@/api/review.api";
 
 import type { Campground, CampgroundReview } from "@/types/campground";
 
-import BookingForm from "@/components/bookings/BookingForm";
-import CampgroundMap from "@/components/CampgroundMap";
-
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 import { useAuthStore } from "@/store/auth.store";
+import CampgroundMap from "@/components/CampgroundMap";
+import type { userBooking } from "@/types/booking";
+import { getUserBooking } from "@/api/booking.api";
 
 const REVIEWS_LIMIT = 10;
 
 const CampgroundPage = () => {
   const { id } = useParams<{ id: string }>();
-
   const navigate = useNavigate();
-  const location = useLocation();
-
   const reviewsRef = useRef<HTMLDivElement | null>(null);
   const shouldScrollToReviews = useRef(false);
 
   const currentUser = useAuthStore((state) => state.user);
 
   const [campground, setCampground] = useState<Campground | null>(null);
-
   const [lightboxImageIndex, setLightboxImageIndex] = useState<number | null>(
     null,
   );
 
   const [reviews, setReviews] = useState<CampgroundReview[]>([]);
-
   const [reviewsPage, setReviewsPage] = useState(1);
   const [totalReviewPages, setTotalReviewPages] = useState(1);
   const [totalReviews, setTotalReviews] = useState(0);
@@ -58,11 +53,11 @@ const CampgroundPage = () => {
 
   const [rating, setRating] = useState<number | null>(null);
   const [reviewText, setReviewText] = useState("");
+  const [userBooking, setUserBooking] = useState<userBooking | null>(null);
+  const [userBookingError, setUserBookingError] = useState("");
 
   const [editedReviewId, setEditedReviewId] = useState<string | null>(null);
-
   const [editedRating, setEditedRating] = useState<number | null>(null);
-
   const [editedReviewText, setEditedReviewText] = useState("");
 
   const [isLoading, setIsLoading] = useState(true);
@@ -76,18 +71,31 @@ const CampgroundPage = () => {
   const [updateReviewError, setUpdateReviewError] = useState("");
   const [deleteReviewError, setDeleteReviewError] = useState("");
 
-  useEffect(() => {
-    if (!campground) {
-      return;
-    }
+  const location = useLocation();
 
+  useEffect(() => {
+    if (!campground || !currentUser) return;
+    const canUserPostReview = async () => {
+      try {
+        const data = await getUserBooking(id);
+        console.log(data.data);
+        setUserBooking(data.data);
+      } catch (error) {
+        console.error("Cannot check if user has any reviews:", error);
+        setUserBookingError("Cannot check if user has any reviews");
+      }
+    };
+    canUserPostReview();
+  }, [campground, currentUser, id]);
+
+  useEffect(() => {
+    if (!campground) return;
     switch (location.state?.action) {
       case "createReview": {
         document.querySelector("#reviews")?.scrollIntoView({
           behavior: "smooth",
           block: "start",
         });
-
         break;
       }
     }
@@ -120,29 +128,22 @@ const CampgroundPage = () => {
   }, [id]);
 
   useEffect(() => {
-    if (!id) {
-      return;
-    }
-
+    if (!id) return;
     const fetchReviews = async () => {
       try {
         setReviewsError("");
         setIsReviewsLoading(true);
-
         const data = await getReviews(id, reviewsPage, REVIEWS_LIMIT);
-
         setReviews(data.data.reviews);
         setTotalReviews(data.data.totalReviews);
         setTotalReviewPages(data.data.totalPages);
       } catch (error) {
         console.error("Failed to fetch campground reviews:", error);
-
         setReviewsError("Failed to fetch campground reviews");
       } finally {
         setIsReviewsLoading(false);
       }
     };
-
     fetchReviews();
   }, [id, reviewsPage]);
 
@@ -152,28 +153,20 @@ const CampgroundPage = () => {
   };
 
   useEffect(() => {
-    if (isReviewsLoading || !shouldScrollToReviews.current) {
-      return;
-    }
-
+    if (isReviewsLoading || !shouldScrollToReviews.current) return;
     reviewsRef.current?.scrollIntoView({
       behavior: "smooth",
       block: "start",
     });
-
     shouldScrollToReviews.current = false;
   }, [isReviewsLoading]);
 
   useEffect(() => {
-    if (lightboxImageIndex === null) {
-      return;
-    }
-
+    if (lightboxImageIndex === null) return;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         handleCloseLightbox();
       }
-
       if (event.key === "ArrowLeft") {
         handlePreviousImage();
       }
@@ -182,9 +175,7 @@ const CampgroundPage = () => {
         handleNextImage();
       }
     };
-
     window.addEventListener("keydown", handleKeyDown);
-
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
@@ -199,37 +190,19 @@ const CampgroundPage = () => {
   };
 
   const handlePreviousImage = () => {
-    if (!campground) {
-      return;
-    }
-
     setLightboxImageIndex((previousIndex) => {
-      if (previousIndex === null) {
-        return null;
-      }
-
+      if (previousIndex === null) return null;
       if (previousIndex === 0) {
         return campground.images.length - 1;
       }
-
       return previousIndex - 1;
     });
   };
 
   const handleNextImage = () => {
-    if (!campground) {
-      return;
-    }
-
     setLightboxImageIndex((previousIndex) => {
-      if (previousIndex === null) {
-        return null;
-      }
-
-      if (previousIndex === campground.images.length - 1) {
-        return 0;
-      }
-
+      if (previousIndex === null) return null;
+      if (previousIndex === campground.images.length - 1) return 0;
       return previousIndex + 1;
     });
   };
@@ -294,7 +267,6 @@ const CampgroundPage = () => {
       });
 
       setTotalReviews((previousTotal) => previousTotal + 1);
-
       setRating(null);
       setReviewText("");
     } catch (error) {
@@ -333,11 +305,9 @@ const CampgroundPage = () => {
         if (!previousCampground) {
           return previousCampground;
         }
-
         const updatedReviews = previousCampground.reviews.filter(
           (review) => review._id !== reviewId,
         );
-
         return {
           ...previousCampground,
           reviews: updatedReviews,
@@ -423,23 +393,8 @@ const CampgroundPage = () => {
         text: trimmedText,
       });
 
-      setReviews((previousReviews) =>
-        previousReviews.map((review) =>
-          review._id === editedReviewId
-            ? {
-                ...review,
-                ...data.data,
-              }
-            : review,
-        ),
-      );
-
-      setCampground((previousCampground) => {
-        if (!previousCampground) {
-          return previousCampground;
-        }
-
-        const updatedReviews = previousCampground.reviews.map((review) =>
+      setReviews((previousReviews) => {
+        const updatedReviews = previousReviews.map((review) =>
           review._id === editedReviewId
             ? {
                 ...review,
@@ -447,11 +402,23 @@ const CampgroundPage = () => {
               }
             : review,
         );
+        return updatedReviews;
+      });
 
+      setCampground((previousCampground) => {
+        if (!previousCampground) return previousCampground;
+        const updateReview = previousCampground.reviews.map((review) =>
+          review._id === editedReviewId
+            ? {
+                ...review,
+                ...data.data,
+              }
+            : review,
+        );
         return {
           ...previousCampground,
-          reviews: updatedReviews,
-          averageRating: calculateAverageRating(updatedReviews),
+          reviews: updateReview,
+          averageRating: calculateAverageRating(updateReview),
         };
       });
 
@@ -487,7 +454,7 @@ const CampgroundPage = () => {
       return;
     }
 
-    navigate("/conversations/new", {
+    navigate(`/conversations/new`, {
       state: {
         campgroundId: campground._id,
       },
@@ -519,8 +486,8 @@ const CampgroundPage = () => {
         Back to campgrounds
       </Button>
 
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_420px]">
-        <div className="min-w-0 space-y-6">
+      <div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
+        <div className="space-y-6">
           {campground.images.length > 0 ? (
             <div className="grid h-130 grid-cols-1 gap-2 overflow-hidden rounded-xl md:grid-cols-4 md:grid-rows-2">
               <button
@@ -561,9 +528,7 @@ const CampgroundPage = () => {
                   type="button"
                   onClick={() => handleOpenLightbox(4)}
                   className="group relative hidden overflow-hidden md:block"
-                  aria-label={`Open ${
-                    campground.images.length - 4
-                  } more photos`}
+                  aria-label={`Open ${campground.images.length - 4} more photos`}
                 >
                   <img
                     src={campground.images[4].url}
@@ -595,7 +560,6 @@ const CampgroundPage = () => {
               <p className="leading-7">{campground.description}</p>
             </CardContent>
           </Card>
-
           {campground.geometry?.coordinates?.length === 2 && (
             <Card>
               <CardHeader>
@@ -605,7 +569,7 @@ const CampgroundPage = () => {
               <CardContent className="space-y-4">
                 <p
                   title={campground.formattedLocation ?? campground.location}
-                  className="cursor-help text-muted-foreground"
+                  className="text-muted-foreground"
                 >
                   {campground.location}
                 </p>
@@ -627,71 +591,99 @@ const CampgroundPage = () => {
 
               <CardContent className="space-y-6">
                 {currentUser ? (
-                  <form
-                    onSubmit={handleCreateReview}
-                    className="space-y-4 rounded-xl border bg-muted/20 p-4"
-                  >
-                    <div>
-                      <p className="mb-2 text-sm font-medium">Your rating</p>
+                  userBooking?.isPastBooking ? (
+                    <form
+                      onSubmit={handleCreateReview}
+                      className="space-y-4 rounded-xl border bg-muted/20 p-4"
+                    >
+                      <div>
+                        <p className="mb-2 text-sm font-medium">Your rating</p>
 
-                      <div className="flex gap-1">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <button
-                            key={star}
-                            type="button"
-                            onClick={() => setRating(star)}
-                            disabled={isPostingReview}
-                            className="rounded-md p-1 transition-transform hover:scale-110 disabled:cursor-not-allowed disabled:opacity-50"
-                            aria-label={`Rate ${star} out of 5`}
-                          >
-                            <Star
-                              className={
-                                star <= (rating ?? 0)
-                                  ? "size-7 fill-yellow-400 text-yellow-400"
-                                  : "size-7 text-muted-foreground"
-                              }
-                            />
-                          </button>
-                        ))}
+                        <div className="flex gap-1">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                              key={star}
+                              type="button"
+                              onClick={() => setRating(star)}
+                              disabled={isPostingReview}
+                              className="rounded-md p-1 transition-transform hover:scale-110 disabled:cursor-not-allowed disabled:opacity-50"
+                              aria-label={`Rate ${star} out of 5`}
+                            >
+                              <Star
+                                className={
+                                  star <= (rating ?? 0)
+                                    ? "size-7 fill-yellow-400 text-yellow-400"
+                                    : "size-7 text-muted-foreground"
+                                }
+                              />
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                    </div>
 
-                    <div>
-                      <label
-                        htmlFor="reviewText"
-                        className="mb-2 block text-sm font-medium"
-                      >
-                        Your review
-                      </label>
+                      <div>
+                        <label
+                          htmlFor="reviewText"
+                          className="mb-2 block text-sm font-medium"
+                        >
+                          Your review
+                        </label>
 
-                      <textarea
-                        id="reviewText"
-                        value={reviewText}
-                        onChange={(event) => setReviewText(event.target.value)}
-                        placeholder="Share your experience..."
-                        disabled={isPostingReview}
-                        className="min-h-28 w-full resize-y rounded-md border bg-background px-3 py-2 outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                        required
-                      />
-                    </div>
+                        <textarea
+                          id="reviewText"
+                          value={reviewText}
+                          onChange={(event) =>
+                            setReviewText(event.target.value)
+                          }
+                          placeholder="Share your experience..."
+                          disabled={isPostingReview}
+                          className="min-h-28 w-full resize-y rounded-md border bg-background px-3 py-2 outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                          required
+                        />
+                      </div>
 
-                    {reviewError && (
-                      <p className="text-sm text-destructive">{reviewError}</p>
-                    )}
+                      {reviewError && (
+                        <p className="text-sm text-destructive">
+                          {reviewError}
+                        </p>
+                      )}
 
-                    <div className="flex justify-end">
+                      <div className="flex justify-end">
+                        <Button
+                          type="submit"
+                          disabled={
+                            isPostingReview ||
+                            rating === null ||
+                            !reviewText.trim()
+                          }
+                        >
+                          {isPostingReview ? "Posting..." : "Post review"}
+                        </Button>
+                      </div>
+                    </form>
+                  ) : (
+                    <div className="rounded-xl border bg-muted/20 p-4">
+                      <p className="text-sm text-muted-foreground">
+                        {userBooking
+                          ? `You can post a review after your stay ${new Date(userBooking.checkOut).toLocaleDateString()}.`
+                          : "You must book a stay first to review a campground."}
+                      </p>
+
                       <Button
-                        type="submit"
-                        disabled={
-                          isPostingReview ||
-                          rating === null ||
-                          !reviewText.trim()
-                        }
+                        type="button"
+                        variant="outline"
+                        className={userBooking ? "hidden mt-3" : "mt-3"}
+                        onClick={() => {
+                          document.querySelector("#calendar")?.scrollIntoView({
+                            behavior: "smooth",
+                            block: "start",
+                          });
+                        }}
                       >
-                        {isPostingReview ? "Posting..." : "Post review"}
+                        Check availability
                       </Button>
                     </div>
-                  </form>
+                  )
                 ) : (
                   <div className="rounded-xl border bg-muted/20 p-4">
                     <p className="text-sm text-muted-foreground">
@@ -921,7 +913,7 @@ const CampgroundPage = () => {
           </div>
         </div>
 
-        <aside className="space-y-6 lg:sticky lg:top-24 lg:self-start">
+        <aside className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>{campground.title}</CardTitle>
@@ -930,7 +922,7 @@ const CampgroundPage = () => {
             <CardContent className="space-y-4">
               <p
                 title={campground.formattedLocation ?? campground.location}
-                className="cursor-help text-muted-foreground"
+                className="text-muted-foreground"
               >
                 {campground.location}
               </p>
@@ -955,11 +947,7 @@ const CampgroundPage = () => {
               </div>
 
               {currentUser?._id !== campground.author._id && (
-                <Button
-                  type="button"
-                  className="w-full"
-                  onClick={handleContactOwner}
-                >
+                <Button className="w-full" onClick={handleContactOwner}>
                   Contact owner
                 </Button>
               )}
@@ -990,17 +978,19 @@ const CampgroundPage = () => {
           </Card>
 
           {currentUser?._id !== campground.author._id && (
-            <BookingForm
-              campgroundId={campground._id}
-              pricePerNight={campground.price}
-            />
+            <div id="calendar" className="scroll-mt-24">
+              <BookingForm
+                campgroundId={campground._id}
+                pricePerNight={campground.price}
+              />
+            </div>
           )}
         </aside>
       </div>
 
       {lightboxImageIndex !== null && (
         <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 p-4"
+          className="fixed inset-0 z-999999999 flex items-center justify-center bg-black/90 p-4"
           role="dialog"
           aria-modal="true"
           aria-label="Image gallery"

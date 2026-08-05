@@ -182,52 +182,6 @@ const BookingForm = ({ campgroundId, pricePerNight }: BookingFormProps) => {
           disabled={disabledDates}
           excludeDisabled
           className="relative w-full rounded-xl border p-3"
-          classNames={{
-            months: "w-full",
-            month: "w-full space-y-4",
-
-            month_caption:
-              "relative flex h-10 w-full items-center justify-center",
-
-            caption_label: "text-base font-semibold",
-
-            nav: "absolute inset-x-3 top-3 z-10 flex h-10 items-center justify-between",
-
-            button_previous:
-              "flex size-8 items-center justify-center rounded-md hover:bg-accent",
-
-            button_next:
-              "flex size-8 items-center justify-center rounded-md hover:bg-accent",
-
-            month_grid: "w-full border-collapse",
-
-            weekdays: "flex w-full",
-
-            weekday:
-              "w-full py-2 text-center text-sm font-normal text-muted-foreground",
-
-            week: "mt-1 flex w-full",
-
-            day: "relative flex w-full items-center justify-center p-0 text-center",
-
-            day_button:
-              "mx-auto flex size-10 items-center justify-center rounded-md text-sm font-normal hover:bg-accent",
-
-            selected:
-              "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground",
-
-            range_start: "rounded-l-md bg-primary text-primary-foreground",
-
-            range_middle: "rounded-none bg-accent text-accent-foreground",
-
-            range_end: "rounded-r-md bg-primary text-primary-foreground",
-
-            today: "font-semibold ring-1 ring-ring",
-
-            disabled: "text-muted-foreground opacity-35",
-
-            outside: "text-muted-foreground opacity-35",
-          }}
         />
         {checkIn && checkOut && (
           <div className="space-y-3 border-t pt-4">
