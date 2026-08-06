@@ -6,7 +6,7 @@ import { AppError } from "../utils/appError.js";
 import { geocodeLocation } from "../utils/geocodeLocation.js";
 import { Conversation } from "../models/conversation.model.js";
 
-const MAX_CAMPGROUND_IMAGES = 6;
+const MAX_CAMPGROUND_IMAGES = 8;
 
 export const getCampgrounds = async (req, res) => {
   const campgrounds = await Campground.find({})

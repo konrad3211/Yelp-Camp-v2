@@ -26,7 +26,7 @@ router.post(
   "/",
   protect,
   //? "images nazwa pola w formsie, 6 - tyle max plikow"
-  upload.array("images", 6),
+  upload.array("images", 8),
   validate(createCampgroundSchema),
   catchAsync(createCampground),
 );
@@ -42,7 +42,7 @@ router.patch(
   "/:id/images",
   protect,
   isAuthor,
-  upload.array("images", 6),
+  upload.array("images", 8),
   catchAsync(updateCampgroundImages),
 );
 

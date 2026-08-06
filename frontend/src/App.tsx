@@ -14,6 +14,7 @@ import CampgroundPage from "./pages/CampgroundPage";
 import NewConversationPage from "./pages/NewConversationPage";
 import FakePaymentPage from "./pages/FakePaymentPage";
 import BookingSuccessPage from "./pages/BookingSuccessPage";
+import CreateCampgroundPage from "./pages/CreateCampgroundPage";
 
 const App = () => {
   const user = useAuthStore((state) => state.user);
@@ -92,6 +93,12 @@ const App = () => {
       <Route element={<AppLayout />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/campgrounds/:id" element={<CampgroundPage />} />
+        <Route
+          path="/campgrounds/new"
+          element={
+            user ? <CreateCampgroundPage /> : <Navigate to="/login" replace />
+          }
+        />
 
         <Route
           path="/conversations"
@@ -110,11 +117,7 @@ const App = () => {
         />
       </Route>
 
-      <Route
-        path="/login"
-        //replace nie pozwala cofnac do poprzedniej strony w przegladarce
-        element={<LoginPage />}
-      />
+      <Route path="/login" element={<LoginPage />} />
 
       <Route
         path="/bookings/:bookingId/payment"

@@ -662,27 +662,31 @@ const CampgroundPage = () => {
                       </div>
                     </form>
                   ) : (
-                    <div className="rounded-xl border bg-muted/20 p-4">
-                      <p className="text-sm text-muted-foreground">
-                        {userBooking
-                          ? `You can post a review after your stay ${new Date(userBooking.checkOut).toLocaleDateString()}.`
-                          : "You must book a stay first to review a campground."}
-                      </p>
+                    campground.author._id !== currentUser._id && (
+                      <div className="rounded-xl border bg-muted/20 p-4 ${currentUser?._id">
+                        <p className="text-sm text-muted-foreground">
+                          {userBooking
+                            ? `You can post a review after your stay ${new Date(userBooking.checkOut).toLocaleDateString()}.`
+                            : "You must book a stay first to review a campground."}
+                        </p>
 
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className={userBooking ? "hidden mt-3" : "mt-3"}
-                        onClick={() => {
-                          document.querySelector("#calendar")?.scrollIntoView({
-                            behavior: "smooth",
-                            block: "start",
-                          });
-                        }}
-                      >
-                        Check availability
-                      </Button>
-                    </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className={userBooking ? "hidden mt-3" : "mt-3"}
+                          onClick={() => {
+                            document
+                              .querySelector("#calendar")
+                              ?.scrollIntoView({
+                                behavior: "smooth",
+                                block: "start",
+                              });
+                          }}
+                        >
+                          Check availability
+                        </Button>
+                      </div>
+                    )
                   )
                 ) : (
                   <div className="rounded-xl border bg-muted/20 p-4">
