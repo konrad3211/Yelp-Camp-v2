@@ -1,3 +1,4 @@
+import type { CreateCampgroundFormData } from "@/schemas/campground.schema";
 import { api, publicApi } from "./axios";
 import type {
   GetCampgroundResponse,
@@ -18,27 +19,17 @@ export const getCampground = async (campgroundId: string) => {
   return response.data;
 };
 
-type Data = {
-  title: string;
-  street: string;
-  price: number;
-  description: string;
-  houseNumber: Number;
-  city: string;
-  images: File[];
-};
-
-export const createCampground = async (data: Data) => {
+export const createCampground = async (data: CreateCampgroundFormData) => {
   const formData = new FormData();
 
   formData.append("title", data.title);
   formData.append("street", data.street);
   formData.append("description", data.description);
   formData.append("price", String(data.price));
-  formData.append("houseNumber", String(data.houseNumber));
+  formData.append("houseNumber", data.houseNumber);
   formData.append("city", data.city);
 
-  data.images.forEach((image) => {
+  Array.from(data.images).forEach((image) => {
     formData.append("images", image);
   });
 
