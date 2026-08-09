@@ -1,9 +1,18 @@
+import type { CampgroundImage } from "./campground";
 import type { Message } from "./message";
 import type { User } from "./user";
+
+type CampgroundPreviewUser = {
+  _id: string;
+  fullName: string;
+  username: string;
+};
 
 export type CampgroundPreview = {
   _id: string;
   title: string;
+  images: CampgroundImage;
+  author: CampgroundPreviewUser;
 };
 
 export type Conversation = {

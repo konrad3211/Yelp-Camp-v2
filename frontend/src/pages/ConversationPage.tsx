@@ -1,6 +1,6 @@
 import { Link, useParams } from "react-router-dom";
 import { useAuthStore } from "../store/auth.store";
-import { useEffect, useState, type SubmitEventHandler } from "react";
+import { useEffect, useRef, useState, type SubmitEventHandler } from "react";
 import {
   createMessage,
   getConversationMessages,
@@ -8,6 +8,10 @@ import {
 } from "../api/conversation.api";
 import type { Message } from "../types/message";
 import { socket } from "../lib/socket";
+import { ArrowLeft, CheckCheck, Send } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 const ConversationPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -20,6 +24,8 @@ const ConversationPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
     const fetchMessages = async () => {
       if (!id) {
@@ -27,25 +33,32 @@ const ConversationPage = () => {
         setIsLoading(false);
         return;
       }
+
       try {
         setError("");
+
         const data = await getConversationMessages(id);
+
         setMessages(data.messages);
+
         await markMessagesAsRead(id);
       } catch (error) {
         console.error("Failed to fetch messages:", error);
+
         setError("Failed to fetch messages");
       } finally {
         setIsLoading(false);
       }
     };
+
     fetchMessages();
   }, [id]);
 
   useEffect(() => {
-    //Tworzysz funkcję, która wykona się za każdym razem, gdy backend wyemituje: newMessage
     const handleNewMessage = async (newMessage: Message) => {
-      if (newMessage.conversation !== id) return;
+      if (newMessage.conversation !== id) {
+        return;
+      }
 
       setMessages((currentMessages) => [...currentMessages, newMessage]);
 
@@ -66,7 +79,6 @@ const ConversationPage = () => {
   }, [id]);
 
   useEffect(() => {
-    //Tworzysz funkcję, która wykona się za każdym razem, gdy backend wyemituje: messagesRead
     const handleMessagesRead = ({
       conversationId,
       messageIds,
@@ -74,7 +86,10 @@ const ConversationPage = () => {
       conversationId: string;
       messageIds: string[];
     }) => {
-      if (conversationId !== id) return;
+      if (conversationId !== id) {
+        return;
+      }
+
       setMessages((currentMessages) =>
         currentMessages.map((message) =>
           messageIds.includes(message._id)
@@ -94,64 +109,203 @@ const ConversationPage = () => {
     };
   }, [id]);
 
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+    });
+  }, [messages]);
+
   const handleSubmit: SubmitEventHandler<HTMLFormElement> = async (event) => {
     event.preventDefault();
+
     const trimmedText = text.trim();
-    if (!id || !trimmedText) return;
+
+    if (!id || !trimmedText || isSending) {
+      return;
+    }
+
     try {
       setIsSending(true);
       setError("");
-      const msg = await createMessage(id, { text: trimmedText });
-      setMessages((prevMessages) => [...prevMessages, msg.data]);
+
+      const msg = await createMessage(id, {
+        text: trimmedText,
+      });
+
+      setMessages((previousMessages) => [...previousMessages, msg.data]);
+
       setText("");
-      console.log("You sent a message", msg);
     } catch (error) {
       console.error("Failed to send a message", error);
+
       setError("Failed to send a message");
     } finally {
       setIsSending(false);
     }
   };
 
-  if (isLoading) return <p>Loading messages...</p>;
-  if (error) return <p>{error}</p>;
+  if (isLoading) {
+    return (
+      <section className="mx-auto max-w-4xl py-8">
+        <p className="text-muted-foreground">Loading messages...</p>
+      </section>
+    );
+  }
+
+  if (error && messages.length === 0) {
+    return (
+      <section className="mx-auto max-w-4xl py-8">
+        <p className="text-sm text-destructive">{error}</p>
+      </section>
+    );
+  }
+
   return (
-    <main>
-      <Link to="/conversations">Back to conversations</Link>
-      <h1>Conversations</h1>
-      {messages.length === 0 ? (
-        <p>No messages yet.</p>
-      ) : (
-        messages.map((message) => {
-          //jezeli id sendera jest takie samo jak moje to to jest moja wiadomosc
-          const isOwnMessage = message.sender._id === currentUser?._id;
-          return (
-            <article key={message._id}>
-              <strong>{isOwnMessage ? "You" : message.sender.username}</strong>
-              <p>{message.text}</p>
-              {isOwnMessage && <p>{message.isRead ? "Read" : "Sent"}</p>}
-              <small>{new Date(message.createdAt).toLocaleString()}</small>
-            </article>
-          );
-        })
-      )}
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor="message"></label>
-          <input
-            id="message"
-            type="text"
-            value={text}
-            placeholder="Write a message..."
-            maxLength={1000}
-            onChange={(event) => setText(event.target.value)}
-          />
+    <section className="mx-auto max-w-4xl py-6">
+      <Card className="flex h-[78vh] flex-col overflow-hidden">
+        <div className="flex items-center gap-3 border-b px-4 py-3">
+          <Button
+            nativeButton={false}
+            variant="ghost"
+            size="icon"
+            render={<Link to="/conversations" />}
+          >
+            <ArrowLeft className="size-5" />
+          </Button>
+
+          <div>
+            <h1 className="font-semibold">Conversation</h1>
+
+            <p className="text-xs text-muted-foreground">
+              Messages are updated in real time
+            </p>
+          </div>
         </div>
-        <button type="submit" disabled={isSending || !text.trim()}>
-          {isSending ? "Sending..." : "Send"}
-        </button>
-      </form>
-    </main>
+
+        <div className="flex-1 overflow-y-auto bg-muted/20 px-4 py-6">
+          {messages.length === 0 ? (
+            <div className="flex h-full items-center justify-center">
+              <div className="text-center">
+                <p className="font-medium">No messages yet</p>
+
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Send the first message below.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {messages.map((message) => {
+                const isOwnMessage = message.sender._id === currentUser?._id;
+
+                return (
+                  <div
+                    key={message._id}
+                    className={`flex ${
+                      isOwnMessage ? "justify-end" : "justify-start"
+                    }`}
+                  >
+                    <div
+                      className={`max-w-[75%] ${
+                        isOwnMessage ? "items-end" : "items-start"
+                      } flex flex-col`}
+                    >
+                      {!isOwnMessage && (
+                        <span className="mb-1 px-1 text-xs font-medium text-muted-foreground">
+                          {message.sender.username}
+                        </span>
+                      )}
+
+                      <div
+                        className={`rounded-2xl px-4 py-2.5 text-sm shadow-sm ${
+                          isOwnMessage
+                            ? "rounded-br-md bg-primary text-primary-foreground"
+                            : "rounded-bl-md border bg-background"
+                        }`}
+                      >
+                        <p className="whitespace-pre-wrap wrap-break-word">
+                          {message.text}
+                        </p>
+                      </div>
+
+                      <div
+                        className={`mt-1 flex items-center gap-1 px-1 text-[11px] text-muted-foreground ${
+                          isOwnMessage ? "justify-end" : "justify-start"
+                        }`}
+                      >
+                        <span>
+                          {new Date(message.createdAt).toLocaleString("pl-PL", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+
+                        {isOwnMessage && (
+                          <span className="flex items-center gap-1">
+                            <CheckCheck className="size-3.5" />
+
+                            {message.isRead ? "Read" : "Sent"}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+
+              <div ref={messagesEndRef} />
+            </div>
+          )}
+        </div>
+
+        <div className="border-t bg-background p-4">
+          {error && messages.length > 0 && (
+            <p className="mb-2 text-sm text-destructive">{error}</p>
+          )}
+
+          <form onSubmit={handleSubmit} className="flex items-end gap-3">
+            <div className="flex-1">
+              <label htmlFor="message" className="sr-only">
+                Message
+              </label>
+
+              <textarea
+                id="message"
+                value={text}
+                placeholder="Write a message..."
+                maxLength={1000}
+                rows={1}
+                disabled={isSending}
+                onChange={(event) => setText(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && !event.shiftKey) {
+                    event.preventDefault();
+
+                    event.currentTarget.form?.requestSubmit();
+                  }
+                }}
+                className="max-h-32 min-h-11 w-full resize-none rounded-xl border bg-background px-4 py-3 text-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-50"
+              />
+
+              <div className="mt-1 text-right text-[11px] text-muted-foreground">
+                {text.length}/1000
+              </div>
+            </div>
+
+            <Button
+              type="submit"
+              size="icon"
+              className="size-11 shrink-0 rounded-xl"
+              disabled={isSending || !text.trim()}
+            >
+              <Send className="size-4" />
+            </Button>
+          </form>
+        </div>
+      </Card>
+    </section>
   );
 };
 

@@ -100,10 +100,23 @@ export const getConversations = async (req, res) => {
     participants: userId,
   })
     .populate("participants", "username fullName imageUrl")
-    .populate("campground", "title images")
-    .populate("lastMessage", "text isRead sender createdAt updatedAt")
+    .populate({
+      path: "campground",
+      select: "title images author",
+      populate: {
+        path: "author",
+        select: "username fullName imageUrl",
+      },
+    })
+    .populate({
+      path: "lastMessage",
+      select: "text isRead sender createdAt updatedAt",
+      populate: {
+        path: "sender",
+        select: "username fullName imageUrl",
+      },
+    })
     .sort({ updatedAt: -1 });
-  //.lean();
 
   //liczy liczbe nieodczytanych wiadomosci
   const conversationsWithUnreadCount = await Promise.all(
