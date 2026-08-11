@@ -351,6 +351,26 @@ const CampgroundPage = () => {
     setUpdateReviewError("");
   };
 
+  const checkAvailability = () => {
+    const element = document.querySelector("#calendar");
+    if (!element) return;
+    element.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+    element.classList.add(
+      "rounded-xl",
+      "shadow-[0_25px_70px_-20px_rgba(59,130,246,0.5)]",
+      "duration-500",
+    );
+    setTimeout(() => {
+      element.classList.remove(
+        "rounded-xl",
+        "shadow-[0_25px_70px_-20px_rgba(59,130,246,0.5)]",
+      );
+    }, 5000);
+  };
+
   const handleUpdateReview: SubmitEventHandler<HTMLFormElement> = async (
     event,
   ) => {
@@ -674,14 +694,7 @@ const CampgroundPage = () => {
                           type="button"
                           variant="outline"
                           className={userBooking ? "hidden mt-3" : "mt-3"}
-                          onClick={() => {
-                            document
-                              .querySelector("#calendar")
-                              ?.scrollIntoView({
-                                behavior: "smooth",
-                                block: "start",
-                              });
-                          }}
+                          onClick={checkAvailability}
                         >
                           Check availability
                         </Button>

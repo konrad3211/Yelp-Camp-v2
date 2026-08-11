@@ -68,3 +68,22 @@ export const updateCampgroundSchema = createCampgroundSchema
   .refine((data) => Object.keys(data).length > 0, {
     message: "At least one field must be provided.",
   });
+
+export type UpdateCampgroundFormData = z.infer<typeof updateCampgroundSchema>;
+
+export const updateImagesSchema = createCampgroundSchema
+  .pick({
+    images: true,
+  })
+  .extend({
+    images: z
+      .instanceof(FileList)
+      .refine((files) => files.length >= 1, {
+        message: "Select at least one image",
+      })
+      .refine((files) => files.length <= 2, {
+        message: "You can upload up to 2 images",
+      }),
+  });
+
+export type UpdateImagesFormData = z.infer<typeof updateImagesSchema>;

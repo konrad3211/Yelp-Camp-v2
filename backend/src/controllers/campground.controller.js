@@ -212,13 +212,20 @@ export const updateCampgroundImages = async (req, res) => {
   res.status(200).json({
     success: true,
     message: "Images have been added successfully",
-    campground,
+    data: campground,
   });
 };
 
 export const deleteCampgroundImage = async (req, res) => {
   const { imageId } = req.params;
   const campground = req.campground;
+
+  if (campground.images.length <= 6) {
+    throw new AppError(
+      "You must keep at least 6 images. Upload another image before deleting this one.",
+      400,
+    );
+  }
 
   //.id a nie _id bo to jest metoda, ktora wykonuje kod, ktory szuka w tablicy pliku o danym _id
   const image = campground.images.id(imageId);
@@ -236,7 +243,7 @@ export const deleteCampgroundImage = async (req, res) => {
   res.status(200).json({
     success: true,
     message: "Image has been deleted successfully",
-    campground,
+    data: campground,
   });
 };
 

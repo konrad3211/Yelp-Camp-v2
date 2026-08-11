@@ -15,6 +15,7 @@ import NewConversationPage from "./pages/NewConversationPage";
 import FakePaymentPage from "./pages/FakePaymentPage";
 import BookingSuccessPage from "./pages/BookingSuccessPage";
 import CreateCampgroundPage from "./pages/CreateCampgroundPage";
+import UpdateCampgroundPage from "./pages/UpdateCampgroundPage";
 
 const App = () => {
   const user = useAuthStore((state) => state.user);
@@ -98,6 +99,10 @@ const App = () => {
           element={
             user ? <CreateCampgroundPage /> : <Navigate to="/login" replace />
           }
+        />
+        <Route
+          path="/campgrounds/:id/update"
+          element={<UpdateCampgroundPage />}
         />
 
         <Route

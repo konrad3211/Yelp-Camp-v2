@@ -38,6 +38,9 @@ export type Campground = {
   location: string;
   formattedLocation: string;
   price: number;
+  city: string;
+  street: string;
+  houseNumber: string;
   description: string;
   geometry?: CampgroundGeometry;
   reviews: CampgroundReview[];

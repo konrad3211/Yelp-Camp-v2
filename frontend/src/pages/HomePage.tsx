@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import { getCampgrounds } from "@/api/campground.api";
 import type { Campground } from "@/types/campground";
@@ -12,11 +12,27 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const HomePage = () => {
   const [campgrounds, setCampgrounds] = useState<Campground[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const location = useLocation();
+  const state = location.state ?? {};
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (state?.action === "updateCampground") {
+      toast.warning("You are not the author");
+      //usuwamy state, aby toast pokazal sie tylko raz
+      navigate(state.pathname, {
+        replace: true,
+        state: null,
+      });
+    }
+  }, [state.action, state.pathname, navigate]);
 
   useEffect(() => {
     const fetchCampgrounds = async () => {
@@ -62,7 +78,10 @@ const HomePage = () => {
             const mainImage = campground.images[0];
 
             return (
-              <Card key={campground._id} className="overflow-hidden pt-0">
+              <Card
+                key={campground._id}
+                className="flex h-full flex-col overflow-hidden pt-0"
+              >
                 {mainImage ? (
                   <img
                     src={mainImage.url}
@@ -85,7 +104,7 @@ const HomePage = () => {
                   </p>
                 </CardHeader>
 
-                <CardContent>
+                <CardContent className="flex-1">
                   <p className="line-clamp-3 text-sm">
                     {campground.description}
                   </p>
@@ -95,13 +114,22 @@ const HomePage = () => {
                   <span className="font-semibold">
                     {campground.price} zł / night
                   </span>
-
-                  <Button
-                    render={<Link to={`/campgrounds/${campground._id}`} />}
-                    nativeButton={false}
-                  >
-                    View
-                  </Button>
+                  <div className="space-x-2">
+                    <Button
+                      render={<Link to={`/campgrounds/${campground._id}`} />}
+                      nativeButton={false}
+                    >
+                      View
+                    </Button>
+                    <Button
+                      render={
+                        <Link to={`/campgrounds/${campground._id}/update`} />
+                      }
+                      nativeButton={false}
+                    >
+                      Edit
+                    </Button>
+                  </div>
                 </CardFooter>
               </Card>
             );

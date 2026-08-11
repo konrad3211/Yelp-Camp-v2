@@ -1,4 +1,8 @@
-import type { CreateCampgroundFormData } from "@/schemas/campground.schema";
+import type {
+  CreateCampgroundFormData,
+  UpdateCampgroundFormData,
+  UpdateImagesFormData,
+} from "@/schemas/campground.schema";
 import { api, publicApi } from "./axios";
 import type {
   GetCampgroundResponse,
@@ -34,5 +38,37 @@ export const createCampground = async (data: CreateCampgroundFormData) => {
   });
 
   const response = await api.post("/campgrounds", formData);
+  return response.data;
+};
+
+export const updateCampground = async (
+  campgroundId: string,
+  data: UpdateCampgroundFormData,
+) => {
+  const response = await api.patch(`/campgrounds/${campgroundId}`, data);
+  return response.data;
+};
+
+export const deleteCampgroundImage = async (
+  campgroundId: string,
+  imageId: string,
+) => {
+  const response = await api.delete(
+    `/campgrounds/${campgroundId}/images/${imageId}`,
+  );
+  return response.data;
+};
+
+export const updateCampgroundImages = async (
+  id: string,
+  data: UpdateImagesFormData,
+) => {
+  const formData = new FormData();
+
+  Array.from(data.images).forEach((image) => {
+    formData.append("images", image);
+  });
+
+  const response = await api.patch(`/campgrounds/${id}/images`, formData);
   return response.data;
 };

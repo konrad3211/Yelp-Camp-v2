@@ -11,8 +11,9 @@ const LoginPage = () => {
   // location.state przechowuje informację, jaką akcję użytkownik
   // chciał wykonać przed przejściem na stronę logowania.
   const locationState = location.state as {
-    action?: "contactOwner" | "createReview";
+    action?: "contactOwner" | "createReview" | "updateCampground";
     campgroundId?: string;
+    from: string;
   } | null;
 
   const [email, setEmail] = useState("");
@@ -23,7 +24,7 @@ const LoginPage = () => {
   //
   useEffect(() => {
     //!isLoading jest poniewaz bez tego od razu po login() przenosilo by nas do /, a ponizej jest jeszcze kod sprawdzajacy czy nie chcemy utworzyc konwersacji
-    if (user && !isLoading && !locationState?.campgroundId) {
+    if (user && !isLoading && !locationState) {
       navigate("/", { replace: true });
     }
   }, [user, isLoading, navigate]);
@@ -64,6 +65,13 @@ const LoginPage = () => {
           state: {
             campgroundId: locationState.campgroundId,
           },
+        });
+        return;
+      }
+
+      if (locationState?.action === "updateCampground" && locationState?.from) {
+        navigate(locationState.from, {
+          replace: true,
         });
         return;
       }
