@@ -5,11 +5,61 @@ import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
 import { AppError } from "../utils/appError.js";
 import { geocodeLocation } from "../utils/geocodeLocation.js";
 import { Conversation } from "../models/conversation.model.js";
+import { Booking } from "../models/booking.model.js";
 
 const MAX_CAMPGROUND_IMAGES = 8;
 
 export const getCampgrounds = async (req, res) => {
-  const campgrounds = await Campground.find({})
+  const { location, checkIn, checkOut } = req.query;
+  const filter = {};
+  if (location) {
+    filter.location = {
+      $regex: location,
+      $options: "i",
+    };
+  }
+
+  if (checkIn && checkOut) {
+    const startDate = new Date(checkIn);
+    const endDate = new Date(checkOut);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+      throw new AppError("Invalid dates", 400);
+    }
+
+    if (startDate >= endDate) {
+      throw new AppError("Check-out date must be after check-in date", 400);
+    }
+
+    if (startDate < today) {
+      throw new AppError("You cannot search for past dates", 400);
+    }
+
+    const unavailableBookings = await Booking.find({
+      stauts: {
+        $in: ["pending", "confirmed"],
+      },
+      checkIn: {
+        $lt: endDate,
+      },
+      checkOut: {
+        $gt: startDate,
+      },
+    }).select("campground");
+
+    const unavailableBookingsIds = unavailableBookings.map(
+      (booking) => booking.campground,
+    );
+
+    filter._id = {
+      $nin: unavailableBookingsIds,
+    };
+  }
+
+  const campgrounds = await Campground.find(filter)
     .populate("author", "fullName username imageUrl")
     .populate({
       path: "reviews",

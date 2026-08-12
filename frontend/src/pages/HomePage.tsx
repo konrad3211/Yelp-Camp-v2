@@ -13,11 +13,14 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useAuthStore } from "@/store/auth.store";
 
 const HomePage = () => {
   const [campgrounds, setCampgrounds] = useState<Campground[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const currentUser = useAuthStore((state) => state.user);
 
   const location = useLocation();
   const state = location.state ?? {};
@@ -121,14 +124,16 @@ const HomePage = () => {
                     >
                       View
                     </Button>
-                    <Button
-                      render={
-                        <Link to={`/campgrounds/${campground._id}/update`} />
-                      }
-                      nativeButton={false}
-                    >
-                      Edit
-                    </Button>
+                    {currentUser._id === campground.author._id && (
+                      <Button
+                        render={
+                          <Link to={`/campgrounds/${campground._id}/update`} />
+                        }
+                        nativeButton={false}
+                      >
+                        Edit
+                      </Button>
+                    )}
                   </div>
                 </CardFooter>
               </Card>

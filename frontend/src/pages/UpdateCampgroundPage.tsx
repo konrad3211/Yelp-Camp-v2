@@ -534,76 +534,88 @@ const UpdateCampgroundPage = () => {
             ))}
           </div>
 
-          <div className="border-t pt-6">
-            <form
-              className="space-y-4"
-              onSubmit={handleSubmitImages(handleUpdateCampgroundImages)}
-            >
-              <div>
-                <label
-                  htmlFor="images"
-                  className="flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed p-8 text-center transition hover:bg-muted/50"
-                >
-                  <div className="mb-3 flex size-11 items-center justify-center rounded-full bg-muted">
-                    <Upload className="size-5 text-muted-foreground" />
-                  </div>
+          {availableImagesSlots > 0 ? (
+            <div className="border-t pt-6">
+              <form
+                className="space-y-4"
+                onSubmit={handleSubmitImages(handleUpdateCampgroundImages)}
+              >
+                <div>
+                  <label
+                    htmlFor="images"
+                    className="flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed p-8 text-center transition hover:bg-muted/50"
+                  >
+                    <div className="mb-3 flex size-11 items-center justify-center rounded-full bg-muted">
+                      <Upload className="size-5 text-muted-foreground" />
+                    </div>
 
-                  <span className="font-medium">Add more photos</span>
+                    <span className="font-medium">Add more photos</span>
 
-                  <span className="mt-1 text-sm text-muted-foreground">
-                    Click to select images
-                  </span>
-
-                  {selectedImagesCount > 0 && (
-                    <span className="mt-3 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary">
-                      {selectedImagesCount}{" "}
-                      {selectedImagesCount === 1
-                        ? "photo selected"
-                        : "photos selected"}
+                    <span className="mt-1 text-sm text-muted-foreground">
+                      Click to select images
                     </span>
+
+                    {selectedImagesCount > 0 && (
+                      <span className="mt-3 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary">
+                        {selectedImagesCount}{" "}
+                        {selectedImagesCount === 1
+                          ? "photo selected"
+                          : "photos selected"}
+                      </span>
+                    )}
+
+                    <input
+                      disabled={availableImagesSlots === 0}
+                      id="images"
+                      type="file"
+                      multiple={availableImagesSlots > 1}
+                      accept="image/*"
+                      className="hidden"
+                      {...registerImages("images", {
+                        onChange: (event) => {
+                          const files = event.target.files;
+                          if (!files) return;
+                          if (files.length > availableImagesSlots) {
+                            toast.warning(
+                              `You can select up to ${availableImagesSlots} more ${availableImagesSlots === 1 ? "photo" : "photos"}`,
+                            );
+                            event.target.value = "";
+                          }
+                        },
+                      })}
+                    />
+                  </label>
+
+                  {imageErrors.images && (
+                    <p className="mt-2 text-sm text-destructive">
+                      {imageErrors.images.message}
+                    </p>
                   )}
+                </div>
 
-                  <input
-                    disabled={availableImagesSlots === 0}
-                    id="images"
-                    type="file"
-                    multiple={availableImagesSlots > 1}
-                    accept="image/*"
-                    className="hidden"
-                    {...registerImages("images", {
-                      onChange: (event) => {
-                        const files = event.target.files;
-                        if (!files) return;
-                        if (files.length > availableImagesSlots) {
-                          toast.warning(
-                            `You can select up to ${availableImagesSlots} more ${availableImagesSlots === 1 ? "photo" : "photos"}`,
-                          );
-                          event.target.value = "";
-                        }
-                      },
-                    })}
-                  />
-                </label>
+                <div className="flex justify-end">
+                  <Button
+                    type="submit"
+                    disabled={isImagesSubmitting || selectedImagesCount === 0}
+                  >
+                    <Upload className="size-4" />
 
-                {imageErrors.images && (
-                  <p className="mt-2 text-sm text-destructive">
-                    {imageErrors.images.message}
-                  </p>
-                )}
+                    {isImagesSubmitting ? "Uploading..." : "Upload photos"}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          ) : (
+            <div className="border-t pt-6">
+              <div className="rounded-xl bg-muted/50 px-4 py-6 text-center">
+                <p className="font-medium">Maximum number of photos reached</p>
+
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Delete a photo before uploading a new one.
+                </p>
               </div>
-
-              <div className="flex justify-end">
-                <Button
-                  type="submit"
-                  disabled={isImagesSubmitting || selectedImagesCount === 0}
-                >
-                  <Upload className="size-4" />
-
-                  {isImagesSubmitting ? "Uploading..." : "Upload photos"}
-                </Button>
-              </div>
-            </form>
-          </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
