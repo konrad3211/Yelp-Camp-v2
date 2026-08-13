@@ -6,7 +6,7 @@ const AppLayout = () => {
     <div className="min-h-screen bg-background text-foreground">
       <Header />
 
-      <main className="mx-auto w-full max-w-7xl px-4 py-6">
+      <main>
         <Outlet />
       </main>
     </div>

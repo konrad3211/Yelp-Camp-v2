@@ -4,6 +4,7 @@ import { logout } from "@/api/auth.api";
 
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +14,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
+import { CalendarDays, LogOut, MessageCircle, Plus } from "lucide-react";
 
 const Header = () => {
   const user = useAuthStore((state) => state.user);
@@ -36,94 +39,85 @@ const Header = () => {
   return (
     <header className="border-b bg-background">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
-        <div className="flex items-center gap-6">
-          <Link to="/" className="text-xl font-bold">
-            YelpCamp
-          </Link>
+        <Link to="/" className="text-xl font-bold tracking-tight">
+          YelpCamp
+        </Link>
 
-          <nav className="flex items-center gap-2">
+        {!user ? (
+          <div className="flex items-center gap-2">
             <Button
               nativeButton={false}
               variant="ghost"
-              render={<Link to="/campgrounds" />}
+              render={<Link to="/login" />}
             >
-              Campgrounds
+              Log in
             </Button>
 
-            {user && (
-              <>
-                <Button
-                  nativeButton={false}
-                  variant="ghost"
-                  render={<Link to="/campgrounds/new" />}
-                >
+            <Button nativeButton={false} render={<Link to="/register" />}>
+              Sign up
+            </Button>
+          </div>
+        ) : (
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <button
+                  type="button"
+                  className="rounded-full outline-none transition hover:opacity-80"
+                  aria-label="Open user menu"
+                />
+              }
+            >
+              <Avatar className="size-10">
+                <AvatarImage src={user.imageUrl} alt={user.username} />
+
+                <AvatarFallback>{initials}</AvatarFallback>
+              </Avatar>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent align="end" sideOffset={8} className="w-60">
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>
+                  <div className="flex flex-col">
+                    <span className="font-semibold">{user.fullName}</span>
+
+                    <span className="text-xs font-normal text-muted-foreground">
+                      @{user.username}
+                    </span>
+                  </div>
+                </DropdownMenuLabel>
+              </DropdownMenuGroup>
+
+              <DropdownMenuSeparator />
+
+              <DropdownMenuGroup>
+                <DropdownMenuItem render={<Link to="/campgrounds/new" />}>
+                  <Plus className="size-4" />
                   Add campground
-                </Button>
+                </DropdownMenuItem>
 
-                <Button
-                  nativeButton={false}
-                  variant="ghost"
-                  render={<Link to="/conversations" />}
-                >
+                <DropdownMenuItem render={<Link to="/conversations" />}>
+                  <MessageCircle className="size-4" />
                   Conversations
-                </Button>
-              </>
-            )}
-          </nav>
-        </div>
+                </DropdownMenuItem>
 
-        <div className="flex items-center gap-2">
-          {!user ? (
-            <>
-              <Button
-                nativeButton={false}
-                variant="ghost"
-                render={<Link to="/login" />}
-              >
-                Log in
-              </Button>
+                <DropdownMenuItem render={<Link to="/bookings" />}>
+                  <CalendarDays className="size-4" />
+                  My bookings
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
 
-              <Button nativeButton={false} render={<Link to="/register" />}>
-                Sign up
-              </Button>
-            </>
-          ) : (
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                className="flex size-10 items-center justify-center rounded-md"
-                aria-label="Open user menu"
-              >
-                <Avatar>
-                  <AvatarImage src={user.imageUrl} alt={user.username} />
-                  <AvatarFallback>{initials}</AvatarFallback>
-                </Avatar>
-              </DropdownMenuTrigger>
+              <DropdownMenuSeparator />
 
-              <DropdownMenuContent align="end" sideOffset={8} className="w-56">
-                <DropdownMenuGroup>
-                  <DropdownMenuLabel>
-                    <div className="flex flex-col">
-                      <span>{user.fullName}</span>
-
-                      <span className="text-xs font-normal text-muted-foreground">
-                        @{user.username}
-                      </span>
-                    </div>
-                  </DropdownMenuLabel>
-
-                  <DropdownMenuSeparator />
-
-                  <DropdownMenuItem
-                    onClick={handleLogout}
-                    variant="destructive"
-                  >
-                    Log out
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-        </div>
+              <DropdownMenuGroup>
+                <DropdownMenuItem variant="destructive" onClick={handleLogout}>
+                  <LogOut className="size-4" />
+                  Log out
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
     </header>
   );
