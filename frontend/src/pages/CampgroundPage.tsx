@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type SubmitEventHandler } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import {
+  CalendarDays,
   ChevronLeft,
   ChevronRight,
   Pencil,
@@ -26,7 +27,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuthStore } from "@/store/auth.store";
 import CampgroundMap from "@/components/CampgroundMap";
 import type { userBooking } from "@/types/booking";
-import { getUserBooking } from "@/api/booking.api";
+import { getUserBooking, getUserBookings } from "@/api/booking.api";
 
 const REVIEWS_LIMIT = 10;
 
@@ -71,7 +72,22 @@ const CampgroundPage = () => {
   const [updateReviewError, setUpdateReviewError] = useState("");
   const [deleteReviewError, setDeleteReviewError] = useState("");
 
+  const [userBookings, setUserBookings] = useState([]);
+
   const location = useLocation();
+
+  useEffect(() => {
+    if (!campground || !currentUser) return;
+    const fetchUserBooking = async () => {
+      try {
+        const data = await getUserBookings();
+        setUserBookings(data.data);
+      } catch (error) {
+        console.error("Failed to fetch user bookings", error);
+      }
+    };
+    fetchUserBooking();
+  }, [campground, currentUser]);
 
   useEffect(() => {
     if (!campground || !currentUser) return;
@@ -500,11 +516,73 @@ const CampgroundPage = () => {
     .slice(0, 2)
     .toUpperCase();
 
+  const userClosestBooking = userBookings?.find(
+    (booking) =>
+      booking.campground === campground._id && booking.status === "confirmed",
+  );
+
+  const userClosestBookingDate = {
+    checkIn: userClosestBooking ? new Date(userClosestBooking.checkIn) : null,
+    checkOut: userClosestBooking ? new Date(userClosestBooking.checkOut) : null,
+  };
+
   return (
     <section className="space-y-8">
       <Button nativeButton={false} variant="ghost" render={<Link to="/" />}>
         Back to campgrounds
       </Button>
+      {userClosestBookingDate.checkIn && userClosestBookingDate.checkOut && (
+        <div className="rounded-2xl border bg-muted/20 p-6">
+          <div className="mb-4 flex items-center gap-3">
+            <div className="flex size-10 items-center justify-center rounded-full bg-primary/10">
+              <CalendarDays className="size-5 text-primary" />
+            </div>
+
+            <div>
+              <p className="font-semibold text-lg">Your upcoming stay</p>
+              <p className="text-sm text-muted-foreground">
+                Your reservation is confirmed
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="rounded-xl border bg-background p-5 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Check-in
+              </p>
+
+              <p className="mt-2 text-xl font-semibold">
+                {userClosestBookingDate.checkIn.toLocaleDateString("pl-PL", {
+                  timeZone: "Europe/Warsaw",
+                  day: "2-digit",
+                  month: "short",
+                  year: "numeric",
+                })}
+              </p>
+
+              <p className="mt-1 text-sm text-muted-foreground">15:00</p>
+            </div>
+
+            <div className="rounded-xl border bg-background p-5 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Check-out
+              </p>
+
+              <p className="mt-2 text-xl font-semibold">
+                {userClosestBookingDate.checkOut.toLocaleDateString("pl-PL", {
+                  timeZone: "Europe/Warsaw",
+                  day: "2-digit",
+                  month: "short",
+                  year: "numeric",
+                })}
+              </p>
+
+              <p className="mt-1 text-sm text-muted-foreground">12:00</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
         <div className="space-y-6">

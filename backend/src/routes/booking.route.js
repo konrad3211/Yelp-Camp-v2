@@ -9,12 +9,14 @@ import {
   getBooking,
   getCampgroundAvailability,
   getUserBooking,
+  getUserBookings,
   payForBooking,
 } from "../controllers/booking.controller.js";
 
 import { createBookingSchema } from "../schemas/booking.schema.js";
 
 const router = Router();
+router.get("/", protect, catchAsync(getUserBookings));
 router.get("/campgrounds/:campgroundId", protect, catchAsync(getUserBooking));
 
 router.get(

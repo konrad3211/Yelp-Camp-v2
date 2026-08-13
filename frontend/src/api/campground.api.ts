@@ -9,8 +9,16 @@ import type {
   GetCampgroundsResponse,
 } from "@/types/campground";
 
-export const getCampgrounds = async () => {
-  const response = await publicApi.get<GetCampgroundsResponse>("/campgrounds");
+type GetCampgroundParams = {
+  location?: string;
+  checkIn?: string;
+  checkOut?: string;
+};
+
+export const getCampgrounds = async (params?: GetCampgroundParams) => {
+  const response = await publicApi.get<GetCampgroundsResponse>("/campgrounds", {
+    params,
+  });
 
   return response.data;
 };

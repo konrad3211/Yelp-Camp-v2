@@ -1,6 +1,7 @@
 import { Booking } from "../models/booking.model.js";
 import { Campground } from "../models/campground.model.js";
 import { AppError } from "../utils/appError.js";
+import { fromZonedTime } from "date-fns-tz";
 
 const MILLISECONDS_PER_DAY = 1000 * 60 * 60 * 24;
 
@@ -19,10 +20,15 @@ export const createBooking = async (req, res) => {
     throw new AppError("You cannot book your own campground", 400);
   }
 
-  const startDate = new Date(checkIn);
-  const endDate = new Date(checkOut);
+  const timeZone = "Europe/Warsaw";
 
-  //jezeli startDate lub endDate beda undefined
+  const startDate = fromZonedTime(`${checkIn}T15:00:00`, timeZone);
+
+  const endDate = fromZonedTime(`${checkOut}T12:00:00`, timeZone);
+
+  console.log(startDate.toString(), endDate.toString());
+
+  // sprawdzamy, czy daty są prawidłowe
   if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
     throw new AppError("Invalid booking dates", 400);
   }
@@ -168,5 +174,20 @@ export const getUserBooking = async (req, res) => {
   res.status(200).json({
     success: true,
     data,
+  });
+};
+
+export const getUserBookings = async (req, res) => {
+  const userId = req.user._id;
+
+  const userBookings = await Booking.find({
+    user: userId,
+  }).sort({
+    checkIn: 1,
+  });
+
+  res.status(200).json({
+    success: true,
+    data: userBookings,
   });
 };

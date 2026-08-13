@@ -45,3 +45,8 @@ export const getUserBooking = async (campgroundId: string) => {
   const response = await api.get(`/bookings/campgrounds/${campgroundId}`);
   return response.data;
 };
+
+export const getUserBookings = async () => {
+  const response = await api.get("/bookings");
+  return response.data;
+};

@@ -6,6 +6,7 @@ import { AppError } from "../utils/appError.js";
 import { geocodeLocation } from "../utils/geocodeLocation.js";
 import { Conversation } from "../models/conversation.model.js";
 import { Booking } from "../models/booking.model.js";
+import { fromZonedTime } from "date-fns-tz";
 
 const MAX_CAMPGROUND_IMAGES = 8;
 
@@ -20,8 +21,9 @@ export const getCampgrounds = async (req, res) => {
   }
 
   if (checkIn && checkOut) {
-    const startDate = new Date(checkIn);
-    const endDate = new Date(checkOut);
+    const timeZone = "Europe/Warsaw";
+    const startDate = fromZonedTime(`${checkIn}T15:00:00`, timeZone);
+    const endDate = fromZonedTime(`${checkOut}T12:00:00`, timeZone);
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -39,7 +41,7 @@ export const getCampgrounds = async (req, res) => {
     }
 
     const unavailableBookings = await Booking.find({
-      stauts: {
+      status: {
         $in: ["pending", "confirmed"],
       },
       checkIn: {

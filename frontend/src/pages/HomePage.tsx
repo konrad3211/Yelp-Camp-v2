@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type SubmitEventHandler } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import { getCampgrounds } from "@/api/campground.api";
@@ -19,6 +19,11 @@ const HomePage = () => {
   const [campgrounds, setCampgrounds] = useState<Campground[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [searchParams, setSearchParams] = useState({
+    location: "",
+    checkIn: "",
+    checkOut: "",
+  });
 
   const currentUser = useAuthStore((state) => state.user);
 
@@ -40,18 +45,36 @@ const HomePage = () => {
   useEffect(() => {
     const fetchCampgrounds = async () => {
       try {
+        setIsLoading(true);
         setError("");
-        const data = await getCampgrounds();
+        const data = await getCampgrounds(searchParams);
         setCampgrounds(data.data);
       } catch (error) {
         console.error("Failed to fetch campgrounds:", error);
         setError("Failed to fetch campgrounds");
+        toast.warning(error.response?.data?.message);
       } finally {
         setIsLoading(false);
       }
     };
     fetchCampgrounds();
-  }, []);
+  }, [searchParams]);
+
+  const handleSearch: SubmitEventHandler<HTMLFormElement> = (event) => {
+    event.preventDefault();
+
+    const formData = new FormData(event.currentTarget);
+
+    const location = formData.get("location");
+    const checkIn = formData.get("checkIn");
+    const checkOut = formData.get("checkOut");
+    setSearchParams({
+      location: location?.toString() ?? "",
+      checkIn: checkIn?.toString() ?? "",
+      checkOut: checkOut?.toString() ?? "",
+    });
+    console.log(checkIn, checkOut);
+  };
 
   if (isLoading) {
     return <p>Loading campgrounds...</p>;
@@ -63,6 +86,14 @@ const HomePage = () => {
 
   return (
     <section>
+      <form onSubmit={handleSearch} className="p-10 space-x-10">
+        <input placeholder="Location" name="location" />
+        <input type="date" placeholder="Check Out" name="checkIn" />
+        <input type="date" placeholder="Check Out" name="checkOut" />
+        <button className="border px-2 py-1 bg-amber-400" type="submit">
+          Search
+        </button>
+      </form>
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight">
           Find your next campground
@@ -124,7 +155,7 @@ const HomePage = () => {
                     >
                       View
                     </Button>
-                    {currentUser._id === campground.author._id && (
+                    {currentUser?._id === campground.author._id && (
                       <Button
                         render={
                           <Link to={`/campgrounds/${campground._id}/update`} />
