@@ -39,7 +39,11 @@ const Header = () => {
   return (
     <header className="border-b bg-background">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
-        <Link to="/" className="text-xl font-bold tracking-tight">
+        <Link
+          to="/"
+          state={{ action: "refresh" }}
+          className="text-xl font-bold tracking-tight"
+        >
           YelpCamp
         </Link>
 

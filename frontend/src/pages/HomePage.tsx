@@ -49,12 +49,23 @@ const HomePage = () => {
   useEffect(() => {
     if (state?.action === "updateCampground") {
       toast.warning("You are not the author");
-
-      navigate(state.pathname, {
-        replace: true,
-        state: null,
-      });
     }
+
+    if (state?.action === "refresh") {
+      setSearchParams({
+        location: "",
+        checkIn: "",
+        checkOut: "",
+      });
+      document.querySelector<HTMLInputElement>("#location").value = "";
+      document.querySelector<HTMLInputElement>("#checkIn").value = "";
+      document.querySelector<HTMLInputElement>("#checkOut").value = "";
+    }
+
+    navigate(state.pathname, {
+      replace: true,
+      state: null,
+    });
   }, [state.action, state.pathname, navigate]);
 
   useEffect(() => {
