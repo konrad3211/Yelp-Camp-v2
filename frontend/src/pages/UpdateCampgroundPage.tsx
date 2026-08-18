@@ -216,11 +216,12 @@ const UpdateCampgroundPage = () => {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-8 pb-12">
-      <div>
-        <div className="flex items-center gap-3">
-          <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10">
-            <Pencil className="size-5 text-primary" />
+    <div className="mx-auto max-w-5xl space-y-10 px-4 pb-16 pt-10">
+      {/* PAGE HEADER */}
+      <div className="rounded-2xl border bg-muted/20 p-6">
+        <div className="flex items-center gap-4">
+          <div className="flex size-12 shrink-0 items-center justify-center rounded-xl border bg-background shadow-sm">
+            <Pencil className="size-5" />
           </div>
 
           <div>
@@ -235,13 +236,16 @@ const UpdateCampgroundPage = () => {
         </div>
       </div>
 
+      {/* CAMPGROUND DETAILS FORM */}
       <form
         className="space-y-6"
         onSubmit={handleSubmit(handleUpdateCampground)}
       >
+        {/* BASIC INFORMATION */}
         <Card>
           <CardHeader>
             <CardTitle>Basic information</CardTitle>
+
             <CardDescription>
               Change the name and description of your campground.
             </CardDescription>
@@ -291,6 +295,7 @@ const UpdateCampgroundPage = () => {
           </CardContent>
         </Card>
 
+        {/* LOCATION */}
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
@@ -368,9 +373,11 @@ const UpdateCampgroundPage = () => {
           </CardContent>
         </Card>
 
+        {/* PRICE */}
         <Card>
           <CardHeader>
             <CardTitle>Price</CardTitle>
+
             <CardDescription>
               Set the price guests pay for one night.
             </CardDescription>
@@ -432,6 +439,7 @@ const UpdateCampgroundPage = () => {
         </div>
       </form>
 
+      {/* PHOTOS */}
       <Card>
         <CardHeader>
           <div className="flex items-start justify-between gap-4">
@@ -575,11 +583,16 @@ const UpdateCampgroundPage = () => {
                       {...registerImages("images", {
                         onChange: (event) => {
                           const files = event.target.files;
+
                           if (!files) return;
+
                           if (files.length > availableImagesSlots) {
                             toast.warning(
-                              `You can select up to ${availableImagesSlots} more ${availableImagesSlots === 1 ? "photo" : "photos"}`,
+                              `You can select up to ${availableImagesSlots} more ${
+                                availableImagesSlots === 1 ? "photo" : "photos"
+                              }`,
                             );
+
                             event.target.value = "";
                           }
                         },
