@@ -1,17 +1,19 @@
-import { useEffect, useState, type SubmitEventHandler } from "react";
+import { useState, type SubmitEventHandler } from "react";
 import { login } from "../api/auth.api";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useAuthStore } from "@/store/auth.store";
 
 const LoginPage = () => {
-  const user = useAuthStore((state) => state.user);
   const location = useLocation();
   const navigate = useNavigate();
 
   // location.state przechowuje informację, jaką akcję użytkownik
   // chciał wykonać przed przejściem na stronę logowania.
   const locationState = location.state as {
-    action?: "contactOwner" | "createReview" | "updateCampground";
+    action?:
+      | "contactOwner"
+      | "createReview"
+      | "updateCampground"
+      | "fetchBookings";
     campgroundId?: string;
     from: string;
   } | null;
@@ -21,14 +23,6 @@ const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  //
-  useEffect(() => {
-    //!isLoading jest poniewaz bez tego od razu po login() przenosilo by nas do /, a ponizej jest jeszcze kod sprawdzajacy czy nie chcemy utworzyc konwersacji
-    if (user && !isLoading && !locationState) {
-      navigate("/", { replace: true });
-    }
-  }, [user, isLoading, navigate]);
-
   const handleSubmit: SubmitEventHandler<HTMLFormElement> = async (event) => {
     event.preventDefault();
 
@@ -36,16 +30,14 @@ const LoginPage = () => {
       setIsLoading(true);
       setError("");
 
-      const data = await login({
+      await login({
         email,
         password,
       });
 
-      console.log("You are logged in", data);
-
       if (
-        location.state.action === "createReview" &&
-        locationState.campgroundId
+        locationState?.action === "createReview" &&
+        locationState?.campgroundId
       ) {
         navigate(`/campgrounds/${locationState.campgroundId}`, {
           replace: true,
@@ -58,7 +50,7 @@ const LoginPage = () => {
 
       if (
         locationState?.action === "contactOwner" &&
-        locationState.campgroundId
+        locationState?.campgroundId
       ) {
         navigate(`/conversations/new`, {
           replace: true,
@@ -69,13 +61,18 @@ const LoginPage = () => {
         return;
       }
 
-      if (locationState?.action === "updateCampground" && locationState?.from) {
+      if (
+        (locationState?.action === "fetchBookings" ||
+          locationState?.action === "updateCampground") &&
+        locationState?.from
+      ) {
         navigate(locationState.from, {
           replace: true,
         });
         return;
       }
-      //jak powyzszu warunek sie nie wykona to przeniesie nas po zalogowaniu na homepage
+
+      //jak powyzsze warunki sie nie wykonaja to przeniesie nas po zalogowaniu na homepage
       navigate("/", { replace: true });
     } catch (error) {
       console.error("Login flow failed:", error);

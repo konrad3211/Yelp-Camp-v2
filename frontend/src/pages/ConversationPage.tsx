@@ -12,6 +12,7 @@ import { ArrowLeft, CheckCheck, Send } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import PageLoader from "@/components/PageLoader";
 
 const ConversationPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -145,11 +146,7 @@ const ConversationPage = () => {
   };
 
   if (isLoading) {
-    return (
-      <section className="mx-auto max-w-4xl py-8">
-        <p className="text-muted-foreground">Loading messages...</p>
-      </section>
-    );
+    return <PageLoader />;
   }
 
   if (error && messages.length === 0) {

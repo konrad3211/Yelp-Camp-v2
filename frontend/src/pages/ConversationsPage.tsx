@@ -10,6 +10,7 @@ import { socket } from "../lib/socket";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuthStore } from "@/store/auth.store";
+import PageLoader from "@/components/PageLoader";
 
 const ConversationsPage = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -85,11 +86,7 @@ const ConversationsPage = () => {
   }, []);
 
   if (isLoading) {
-    return (
-      <section className="mx-auto max-w-3xl py-8">
-        <p className="text-muted-foreground">Loading conversations...</p>
-      </section>
-    );
+    return <PageLoader />;
   }
 
   if (error) {

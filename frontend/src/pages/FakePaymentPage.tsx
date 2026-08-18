@@ -1,4 +1,5 @@
 import { getBooking, payForBooking } from "@/api/booking.api";
+import PageLoader from "@/components/PageLoader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Booking } from "@/types/booking";
 import { Button } from "@base-ui/react";
@@ -62,7 +63,7 @@ const FakePaymentPage = () => {
   };
 
   if (isLoading) {
-    return <p>Loading booking...</p>;
+    return <PageLoader />;
   }
   if (error && !booking) {
     return <p>{error}</p>;

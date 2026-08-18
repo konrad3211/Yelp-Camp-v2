@@ -1,14 +1,28 @@
 import { getBooking } from "@/api/booking.api";
+import PageLoader from "@/components/PageLoader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Booking } from "@/types/booking";
 import { CheckCircle2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Navigate, useNavigate, useParams } from "react-router-dom";
+import {
+  Link,
+  Navigate,
+  useLocation,
+  useNavigate,
+  useParams,
+} from "react-router-dom";
 
 const BookingSuccessPage = () => {
   const { bookingId } = useParams<{ bookingId: string }>();
   const navigate = useNavigate();
+
+  const location = useLocation();
+
+  const locationState = location.state as {
+    action?: "showConfirmation";
+    from?: "/bookings";
+  };
 
   const [booking, setBooking] = useState<Booking | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -35,7 +49,7 @@ const BookingSuccessPage = () => {
   }
 
   if (isLoading) {
-    return <p className="text-center">Loading booking...</p>;
+    return <PageLoader />;
   }
 
   if (error) {
@@ -51,20 +65,28 @@ const BookingSuccessPage = () => {
   }
 
   return (
-    <section className="mx-auto max-w-xl py-10">
+    <section className="mx-auto max-w-xl space-y-4 py-10">
+      {locationState?.action === "showConfirmation" && locationState?.from && (
+        <Button
+          variant="ghost"
+          nativeButton={false}
+          render={<Link to={locationState.from} />}
+          className="w-fit px-0 text-muted-foreground hover:bg-transparent hover:text-foreground"
+        >
+          ← Back to bookings
+        </Button>
+      )}
+
       <Card>
         <CardHeader className="items-center text-center">
           <div className="mb-3 flex size-16 items-center justify-center rounded-full bg-green-100">
             <CheckCircle2 className="size-9 text-green-600" />
           </div>
-
           <CardTitle className="text-2xl">Booking confirmed</CardTitle>
-
           <p className="text-sm text-muted-foreground">
             Your test payment was completed successfully.
           </p>
         </CardHeader>
-
         <CardContent className="space-y-5">
           <div className="rounded-xl border p-4">
             <p className="font-semibold">{booking.campground.title}</p>

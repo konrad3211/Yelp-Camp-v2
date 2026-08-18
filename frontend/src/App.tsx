@@ -16,6 +16,7 @@ import FakePaymentPage from "./pages/FakePaymentPage";
 import BookingSuccessPage from "./pages/BookingSuccessPage";
 import CreateCampgroundPage from "./pages/CreateCampgroundPage";
 import UpdateCampgroundPage from "./pages/UpdateCampgroundPage";
+import BookingsPage from "./pages/BookingsPage";
 
 const App = () => {
   const user = useAuthStore((state) => state.user);
@@ -100,17 +101,27 @@ const App = () => {
             user ? <CreateCampgroundPage /> : <Navigate to="/login" replace />
           }
         />
+
+        <Route
+          path="/bookings"
+          element={
+            user ? (
+              <BookingsPage />
+            ) : (
+              <Navigate
+                to="/bookings"
+                state={{ action: "fetchBookings", from: "/bookings" }}
+              />
+            )
+          }
+        />
+
         <Route
           path="/campgrounds/:id/update"
           element={<UpdateCampgroundPage />}
         />
 
-        <Route
-          path="/conversations"
-          element={
-            user ? <ConversationsPage /> : <Navigate to="/login" replace />
-          }
-        />
+        <Route path="/conversations" element={<ConversationsPage />} />
 
         <Route path="/conversations/new" element={<NewConversationPage />} />
 
@@ -122,7 +133,10 @@ const App = () => {
         />
       </Route>
 
-      <Route path="/login" element={<LoginPage />} />
+      <Route
+        path="/login"
+        element={user ? <Navigate to="/" replace /> : <LoginPage />}
+      />
 
       <Route
         path="/bookings/:bookingId/payment"

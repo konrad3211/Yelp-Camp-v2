@@ -28,6 +28,7 @@ import { useAuthStore } from "@/store/auth.store";
 import CampgroundMap from "@/components/CampgroundMap";
 import type { userBooking } from "@/types/booking";
 import { getUserBooking, getUserBookings } from "@/api/booking.api";
+import PageLoader from "@/components/PageLoader";
 
 const REVIEWS_LIMIT = 10;
 
@@ -498,7 +499,7 @@ const CampgroundPage = () => {
   };
 
   if (isLoading) {
-    return <p>Loading campground...</p>;
+    return <PageLoader />;
   }
 
   if (error) {
@@ -518,7 +519,8 @@ const CampgroundPage = () => {
 
   const userClosestBooking = userBookings?.find(
     (booking) =>
-      booking.campground === campground._id && booking.status === "confirmed",
+      booking.campground._id === campground._id &&
+      booking.status === "confirmed",
   );
 
   const userClosestBookingDate = {
@@ -527,7 +529,8 @@ const CampgroundPage = () => {
   };
 
   return (
-    <section className="space-y-8">
+    <section className="mx-auto max-w-7xl space-y-8 px-4 py-6">
+      {" "}
       <Button nativeButton={false} variant="ghost" render={<Link to="/" />}>
         Back to campgrounds
       </Button>
@@ -583,7 +586,6 @@ const CampgroundPage = () => {
           </div>
         </div>
       )}
-
       <div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
         <div className="space-y-6">
           {campground.images.length > 0 ? (
@@ -1082,7 +1084,6 @@ const CampgroundPage = () => {
           )}
         </aside>
       </div>
-
       {lightboxImageIndex !== null && (
         <div
           className="fixed inset-0 z-999999999 flex items-center justify-center bg-black/90 p-4"

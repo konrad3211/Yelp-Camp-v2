@@ -182,12 +182,50 @@ export const getUserBookings = async (req, res) => {
 
   const userBookings = await Booking.find({
     user: userId,
-  }).sort({
-    checkIn: 1,
-  });
+  })
+    .populate({
+      path: "campground",
+      populate: {
+        path: "author",
+        select: "username fullName imageUrl",
+      },
+    })
+    .sort({
+      checkIn: 1,
+    });
 
   res.status(200).json({
     success: true,
     data: userBookings,
+  });
+};
+
+export const cancelUserBooking = async (req, res) => {
+  const userId = req.user._id;
+  const { bookingId } = req.params;
+
+  const booking = await Booking.findOne({
+    _id: bookingId,
+    user: userId,
+  });
+  if (!booking) {
+    throw new AppError("Booking not found", 404);
+  }
+
+  booking.status = "cancelled";
+
+  await booking.populate({
+    path: "campground",
+    populate: {
+      path: "author",
+      select: "username fullName imageUrl",
+    },
+  });
+
+  await booking.save();
+
+  res.status(200).json({
+    success: true,
+    data: booking,
   });
 };

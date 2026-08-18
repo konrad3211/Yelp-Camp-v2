@@ -15,6 +15,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import PageLoader from "@/components/PageLoader";
 
 const HomePage = () => {
   const [campgrounds, setCampgrounds] = useState<Campground[]>([]);
@@ -57,9 +58,21 @@ const HomePage = () => {
         checkIn: "",
         checkOut: "",
       });
-      document.querySelector<HTMLInputElement>("#location").value = "";
-      document.querySelector<HTMLInputElement>("#checkIn").value = "";
-      document.querySelector<HTMLInputElement>("#checkOut").value = "";
+      const location = document.querySelector<HTMLInputElement>("#location");
+      if (location) {
+        location.value = "";
+      }
+
+      const checkIn = document.querySelector<HTMLInputElement>("#checkIn");
+      if (checkIn) {
+        checkIn.value = "";
+      }
+
+      const checkOut = document.querySelector<HTMLInputElement>("#checkOut");
+
+      if (checkOut) {
+        checkOut.value = "";
+      }
     }
 
     navigate(state.pathname, {
@@ -112,7 +125,7 @@ const HomePage = () => {
   };
 
   if (isLoading) {
-    return <p>Loading campgrounds...</p>;
+    return <PageLoader />;
   }
 
   return (

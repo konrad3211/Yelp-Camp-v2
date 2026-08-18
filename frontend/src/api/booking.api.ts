@@ -50,3 +50,8 @@ export const getUserBookings = async () => {
   const response = await api.get("/bookings");
   return response.data;
 };
+
+export const cancelUserBooking = async (bookingId: string) => {
+  const response = await api.patch(`/bookings/${bookingId}/cancel`);
+  return response.data;
+};

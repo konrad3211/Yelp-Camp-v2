@@ -38,6 +38,7 @@ import { useEffect, useState } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
+import PageLoader from "@/components/PageLoader";
 
 const UpdateCampgroundPage = () => {
   const { id } = useParams();
@@ -177,7 +178,7 @@ const UpdateCampgroundPage = () => {
   const availableImagesSlots = 8 - (campground?.images?.length ?? 0);
 
   if (isLoading) {
-    return <p>Fetching data...</p>;
+    return <PageLoader />;
   }
 
   if (!currentUser) {
