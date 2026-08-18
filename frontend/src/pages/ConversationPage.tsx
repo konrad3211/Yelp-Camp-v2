@@ -25,7 +25,12 @@ const ConversationPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
+  const hasScrolledInitially = useRef(false);
+
+  useEffect(() => {
+    hasScrolledInitially.current = false;
+  }, [id]);
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -111,10 +116,31 @@ const ConversationPage = () => {
   }, [id]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({
+    hasScrolledInitially.current = false;
+  }, [id]);
+
+  useEffect(() => {
+    if (isLoading || messages.length === 0) {
+      return;
+    }
+
+    const container = messagesContainerRef.current;
+
+    if (!container) {
+      return;
+    }
+
+    if (!hasScrolledInitially.current) {
+      container.scrollTop = container.scrollHeight;
+      hasScrolledInitially.current = true;
+      return;
+    }
+
+    container.scrollTo({
+      top: container.scrollHeight,
       behavior: "smooth",
     });
-  }, [messages]);
+  }, [messages, isLoading]);
 
   const handleSubmit: SubmitEventHandler<HTMLFormElement> = async (event) => {
     event.preventDefault();
@@ -151,14 +177,14 @@ const ConversationPage = () => {
 
   if (error && messages.length === 0) {
     return (
-      <section className="mx-auto max-w-4xl py-8">
+      <section className="mx-auto max-w-4xl px-4 py-8">
         <p className="text-sm text-destructive">{error}</p>
       </section>
     );
   }
 
   return (
-    <section className="mx-auto max-w-4xl py-6">
+    <section className="mx-auto max-w-4xl px-4 py-6">
       <Card className="flex h-[78vh] flex-col overflow-hidden">
         <div className="flex items-center gap-3 border-b px-4 py-3">
           <Button
@@ -179,7 +205,10 @@ const ConversationPage = () => {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto bg-muted/20 px-4 py-6">
+        <div
+          ref={messagesContainerRef}
+          className="min-h-0 flex-1 overflow-y-auto bg-muted/20 px-4 py-6"
+        >
           {messages.length === 0 ? (
             <div className="flex h-full items-center justify-center">
               <div className="text-center">
@@ -203,9 +232,9 @@ const ConversationPage = () => {
                     }`}
                   >
                     <div
-                      className={`max-w-[75%] ${
+                      className={`flex max-w-[75%] flex-col ${
                         isOwnMessage ? "items-end" : "items-start"
-                      } flex flex-col`}
+                      }`}
                     >
                       {!isOwnMessage && (
                         <span className="mb-1 px-1 text-xs font-medium text-muted-foreground">
@@ -251,8 +280,6 @@ const ConversationPage = () => {
                   </div>
                 );
               })}
-
-              <div ref={messagesEndRef} />
             </div>
           )}
         </div>
