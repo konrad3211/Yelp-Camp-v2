@@ -2,6 +2,7 @@ import { file } from "zod";
 import { User } from "../models/user.model.js";
 import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
 import cloudinary from "../lib/cloudinary.js";
+import { AppError } from "../utils/appError.js";
 
 export const getAllUsers = async (req, res) => {
   const userId = req.user._id;
@@ -26,7 +27,7 @@ export const updateUser = async (req, res) => {
 
   res.status(200).json({
     message: "User has been updated successfully",
-    user: req.user,
+    data: req.user,
   });
 };
 
@@ -36,9 +37,7 @@ export const updateUserPassword = async (req, res) => {
   const user = await User.findById(userId);
   const isMatch = await user.comparePassword(currentPassword);
   if (!isMatch) {
-    return res.status(400).json({
-      message: "Current password is incorrect",
-    });
+    throw new AppError("Current password is incorrect", 400);
   }
 
   req.user.password = newPassword;
@@ -69,7 +68,7 @@ export const updateUserAvatar = async (req, res) => {
 
   res.status(200).json({
     message: "Avatar has been updated successfully",
-    user,
+    data: user,
   });
 };
 

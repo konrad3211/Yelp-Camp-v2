@@ -338,7 +338,13 @@ const BookingsPage = () => {
                         <Button
                           nativeButton={false}
                           render={
-                            <Link to={`/bookings/${booking._id}/payment`} />
+                            <Link
+                              to={`/bookings/${booking._id}/payment`}
+                              state={{
+                                action: "payNow",
+                                from: "/bookings",
+                              }}
+                            />
                           }
                         >
                           Pay now

@@ -17,6 +17,9 @@ import BookingSuccessPage from "./pages/BookingSuccessPage";
 import CreateCampgroundPage from "./pages/CreateCampgroundPage";
 import UpdateCampgroundPage from "./pages/UpdateCampgroundPage";
 import BookingsPage from "./pages/BookingsPage";
+import RegisterPage from "./pages/RegisterPage";
+import UserProfilePage from "./pages/UserProfilePage";
+import PageLoader from "./components/PageLoader";
 
 const App = () => {
   const user = useAuthStore((state) => state.user);
@@ -87,7 +90,7 @@ const App = () => {
 
   //to wyswietla Loading... i blokuje przejscie do routes przez co jak sie laduje to routy sie nie beda odpalaly co zapobiegnie roznym rzeczom
   if (isAuthLoading) {
-    return <p>Loading...</p>;
+    return <PageLoader />;
   }
 
   return (
@@ -131,6 +134,13 @@ const App = () => {
             user ? <ConversationPage /> : <Navigate to="/login" replace />
           }
         />
+
+        <Route
+          path="/profile"
+          element={
+            user ? <UserProfilePage /> : <Navigate to="/login" replace />
+          }
+        />
       </Route>
 
       <Route
@@ -139,8 +149,13 @@ const App = () => {
       />
 
       <Route
+        path="/register"
+        element={user ? <Navigate to="/" replace /> : <RegisterPage />}
+      />
+
+      <Route
         path="/bookings/:bookingId/payment"
-        element={<FakePaymentPage />}
+        element={user ? <FakePaymentPage /> : <Navigate to="/login" replace />}
       />
 
       <Route

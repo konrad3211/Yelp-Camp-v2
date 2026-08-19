@@ -56,7 +56,7 @@ const UpdateCampgroundPage = () => {
     register,
     handleSubmit,
     reset,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isDirty },
   } = useForm<UpdateCampgroundFormData>({
     resolver: zodResolver(updateCampgroundSchema),
   });
@@ -431,7 +431,7 @@ const UpdateCampgroundPage = () => {
             Cancel
           </Button>
 
-          <Button type="submit" disabled={isSubmitting}>
+          <Button type="submit" disabled={isSubmitting || !isDirty}>
             <Save className="size-4" />
 
             {isSubmitting ? "Saving..." : "Save changes"}

@@ -123,7 +123,12 @@ const BookingForm = ({ campgroundId, pricePerNight }: BookingFormProps) => {
         checkOut: formatDateForApi(selectedRange.to),
       });
 
-      navigate(`/bookings/${data.data._id}/payment`);
+      navigate(`/bookings/${data.data._id}/payment`, {
+        state: {
+          from: `/campgrounds/${campgroundId}`,
+          action: "createBooking",
+        },
+      });
     } catch (error) {
       console.error("Failed to create booking:", error);
 
