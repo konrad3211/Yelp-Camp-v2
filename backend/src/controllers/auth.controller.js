@@ -52,7 +52,7 @@ export const register = async (req, res) => {
     success: true,
     message: "User created successfully",
     accessToken,
-    user: {
+    data: {
       _id: user._id,
       fullName: user.fullName,
       username: user.username,

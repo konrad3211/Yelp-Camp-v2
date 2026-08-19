@@ -6,6 +6,7 @@ import type {
   LogoutResponse,
   RefreshResponse,
 } from "../types/auth";
+import type { RegisterUserFormData } from "@/schemas/auth.schema";
 
 export const login = async (loginData: LoginData) => {
   const response = await authApi.post<LoginResponse>("/auth/login", loginData);
@@ -14,6 +15,17 @@ export const login = async (loginData: LoginData) => {
 
   const authStore = useAuthStore.getState();
 
+  authStore.setAccessToken(accessToken);
+  authStore.setUser(user);
+
+  return response.data;
+};
+
+export const register = async (registerData: RegisterUserFormData) => {
+  const response = await authApi.post("/auth/register", registerData);
+  const { accessToken, user } = response.data;
+
+  const authStore = useAuthStore.getState();
   authStore.setAccessToken(accessToken);
   authStore.setUser(user);
 
