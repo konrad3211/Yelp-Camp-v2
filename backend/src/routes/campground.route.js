@@ -5,6 +5,7 @@ import {
   deleteCampgroundImage,
   getCampground,
   getCampgrounds,
+  getUserCampgrounds,
   updateCampground,
   updateCampgroundImages,
 } from "../controllers/campground.controller.js";
@@ -22,6 +23,7 @@ const router = Router();
 
 router.get("/", catchAsync(getCampgrounds));
 router.get("/:id", catchAsync(getCampground));
+router.get("/user/:userId", catchAsync(getUserCampgrounds));
 router.post(
   "/",
   protect,

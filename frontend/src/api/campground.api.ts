@@ -80,3 +80,13 @@ export const updateCampgroundImages = async (
   const response = await api.patch(`/campgrounds/${id}/images`, formData);
   return response.data;
 };
+
+export const getUserCampgrounds = async (userId: string) => {
+  const response = await publicApi.get(`/campgrounds/user/${userId}`);
+  return response.data;
+};
+
+export const deleteCampground = async (campgroundId: string) => {
+  const response = await api.delete(`/campgrounds/${campgroundId}`);
+  return response.data;
+};

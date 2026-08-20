@@ -15,7 +15,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { CalendarDays, LogOut, MessageCircle, Plus, User } from "lucide-react";
+import {
+  CalendarDays,
+  LogOut,
+  MessageCircle,
+  Plus,
+  Tent,
+  User,
+} from "lucide-react";
 
 const Header = () => {
   const user = useAuthStore((state) => state.user);
@@ -106,6 +113,12 @@ const Header = () => {
                 <DropdownMenuItem render={<Link to="/campgrounds/new" />}>
                   <Plus className="size-4" />
                   Add campground
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  render={<Link to={`/campgrounds/user/${user._id}`} />}
+                >
+                  <Tent className="size-4" />
+                  My campgrounds
                 </DropdownMenuItem>
 
                 <DropdownMenuItem render={<Link to="/conversations" />}>

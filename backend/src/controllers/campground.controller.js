@@ -316,3 +316,19 @@ export const deleteCampground = async (req, res) => {
     message: "Campground has been deleted successfully",
   });
 };
+
+export const getUserCampgrounds = async (req, res) => {
+  const { userId } = req.params;
+  const userCampgrounds = await Campground.find({
+    author: userId,
+  })
+    .populate("author", "username fullName imageUrl createdAt")
+
+    .sort({ createdAt: -1 });
+
+  res.status(200).json({
+    success: true,
+    message: "User campgrounds have been fetched successfully",
+    data: userCampgrounds,
+  });
+};
