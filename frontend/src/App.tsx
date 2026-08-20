@@ -20,6 +20,7 @@ import BookingsPage from "./pages/BookingsPage";
 import RegisterPage from "./pages/RegisterPage";
 import UserProfilePage from "./pages/UserProfilePage";
 import PageLoader from "./components/PageLoader";
+import UserCampgroundsPage from "./pages/UserCampgroundsPage";
 
 const App = () => {
   const user = useAuthStore((state) => state.user);
@@ -99,11 +100,10 @@ const App = () => {
         <Route path="/" element={<HomePage />} />
         <Route path="/campgrounds/:id" element={<CampgroundPage />} />
         <Route
-          path="/campgrounds/new"
-          element={
-            user ? <CreateCampgroundPage /> : <Navigate to="/login" replace />
-          }
+          path="/campgrounds/user/:userId"
+          element={<UserCampgroundsPage />}
         />
+        <Route path="/campgrounds/new" element={<CreateCampgroundPage />} />
 
         <Route
           path="/bookings"
@@ -112,7 +112,7 @@ const App = () => {
               <BookingsPage />
             ) : (
               <Navigate
-                to="/bookings"
+                to="/login"
                 state={{ action: "fetchBookings", from: "/bookings" }}
               />
             )
@@ -124,7 +124,20 @@ const App = () => {
           element={<UpdateCampgroundPage />}
         />
 
-        <Route path="/conversations" element={<ConversationsPage />} />
+        <Route
+          path="/conversations"
+          element={
+            user ? (
+              <ConversationsPage />
+            ) : (
+              <Navigate
+                to="/login"
+                replace
+                state={{ action: "fetchConversations", from: "/conversations" }}
+              />
+            )
+          }
+        />
 
         <Route path="/conversations/new" element={<NewConversationPage />} />
 

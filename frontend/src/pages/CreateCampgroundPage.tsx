@@ -68,7 +68,13 @@ const CreateCampgroundPage = () => {
   };
 
   if (!currentUser) {
-    return <Navigate to="/login" replace />;
+    return (
+      <Navigate
+        to="/login"
+        state={{ action: "createCampground", from: "/campgrounds/new" }}
+        replace
+      />
+    );
   }
 
   return (

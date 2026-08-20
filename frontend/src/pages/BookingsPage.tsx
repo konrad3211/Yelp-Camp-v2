@@ -22,8 +22,8 @@ import {
 import { useAuthStore } from "@/store/auth.store";
 import type { Booking } from "@/types/booking";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { Eye, MapPin } from "lucide-react";
+import { Link, Navigate } from "react-router-dom";
+import { CalendarDays, Eye } from "lucide-react";
 
 const BookingsPage = () => {
   const currentUser = useAuthStore((state) => state.user);
@@ -96,8 +96,29 @@ const BookingsPage = () => {
     return <p className="text-destructive">{fetchBookingsError}</p>;
   }
 
-  if (bookings.length <= 0) {
-    return <p>You do not have any bookings yet</p>;
+  if (bookings.length === 0) {
+    return (
+      <section className="mx-auto max-w-3xl px-4 py-16">
+        <div className="rounded-2xl border bg-muted/20 px-6 py-14 text-center">
+          <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-background shadow-sm">
+            <CalendarDays className="size-6 text-muted-foreground" />
+          </div>
+
+          <h2 className="mt-5 text-xl font-semibold">No bookings yet</h2>
+
+          <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+            You haven't booked any campgrounds yet. Explore available places and
+            plan your next stay.
+          </p>
+
+          <div className="mt-6">
+            <Button nativeButton={false} render={<Link to="/" />}>
+              Browse campgrounds
+            </Button>
+          </div>
+        </div>
+      </section>
+    );
   }
 
   return (

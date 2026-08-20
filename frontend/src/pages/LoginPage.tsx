@@ -14,7 +14,11 @@ const LoginPage = () => {
       | "contactOwner"
       | "createReview"
       | "updateCampground"
-      | "fetchBookings";
+      | "fetchBookings"
+      | "fetchConversations"
+      | "createCampground"
+      | "fetchBookings"
+      | "fetchUserCampgrounds";
     campgroundId?: string;
     from: string;
   } | null;
@@ -73,11 +77,42 @@ const LoginPage = () => {
         return;
       }
 
+      if (
+        locationState?.action === "fetchConversations" &&
+        locationState?.from === "/conversations"
+      ) {
+        navigate(locationState.from, {
+          replace: true,
+        });
+        return;
+      }
+      if (locationState?.action === "createCampground" && locationState?.from) {
+        navigate(locationState.from, {
+          replace: true,
+        });
+        return;
+      }
+      if (locationState?.action === "fetchBookings" && locationState?.from) {
+        navigate(locationState.from, {
+          replace: true,
+        });
+        return;
+      }
+
+      if (
+        locationState?.action === "fetchUserCampgrounds" &&
+        locationState?.from
+      ) {
+        navigate(locationState.from, {
+          replace: true,
+        });
+        return;
+      }
       //jak powyzsze warunki sie nie wykonaja to przeniesie nas po zalogowaniu na homepage
       navigate("/", { replace: true });
     } catch (error) {
       console.error("Login flow failed:", error);
-      setError("Failed to log in or open conversation");
+      setError(error.response?.data?.message ?? "Failed to log in");
     } finally {
       setIsLoading(false);
     }
