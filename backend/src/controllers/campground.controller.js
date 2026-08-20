@@ -7,6 +7,7 @@ import { geocodeLocation } from "../utils/geocodeLocation.js";
 import { Conversation } from "../models/conversation.model.js";
 import { Booking } from "../models/booking.model.js";
 import { fromZonedTime } from "date-fns-tz";
+import { Message } from "../models/message.model.js";
 
 const MAX_CAMPGROUND_IMAGES = 8;
 
@@ -307,8 +308,20 @@ export const deleteCampground = async (req, res) => {
       cloudinary.uploader.destroy(image.filename),
     ),
   );
+
+  const conversations = await Conversation.find({
+    campground: campground._id,
+  }).select("_id");
+
+  const conversationIds = conversations.map((conversation) => conversation._id);
+
+  await Message.deleteMany({
+    conversation: { $in: conversationIds },
+  });
+
   await Review.deleteMany({ _id: { $in: campground.reviews } });
-  await Conversation.deleteMany({ campground: { $in: campground._id } });
+  await Conversation.deleteMany({ campground: campground._id });
+  await Booking.deleteMany({ campground: campground._id });
   await campground.deleteOne();
 
   res.status(200).json({

@@ -1,4 +1,5 @@
 import {
+  deleteCampground,
   deleteCampgroundImage,
   getCampground,
   updateCampground,
@@ -51,6 +52,7 @@ const UpdateCampgroundPage = () => {
   const [serverError, setServerError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isImageDeleting, setIsImageDeleting] = useState(false);
+  const [isCampgroundDeleting, setIsCampgroundDeleting] = useState(false);
 
   const {
     register,
@@ -175,9 +177,32 @@ const UpdateCampgroundPage = () => {
     }
   };
 
+  const handleDeleteCampground = async (campgroundId: string) => {
+    try {
+      setIsCampgroundDeleting(true);
+      await deleteCampground(campgroundId);
+      navigate("/", {
+        replace: true,
+        state: {
+          action: "deleteCampground",
+        },
+      });
+    } catch (error) {
+      console.error("Failed to delete a campground", error);
+      toast.error(
+        error.response?.data?.message ?? "Failed to delete a campground",
+      );
+      setIsCampgroundDeleting(false);
+    }
+  };
+
   const availableImagesSlots = 8 - (campground?.images?.length ?? 0);
 
   if (isLoading) {
+    return <PageLoader />;
+  }
+
+  if (isCampgroundDeleting) {
     return <PageLoader />;
   }
 
@@ -459,7 +484,6 @@ const UpdateCampgroundPage = () => {
             </div>
           </div>
         </CardHeader>
-
         <CardContent className="space-y-6">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {campground.images.map((img, index) => (
@@ -630,6 +654,73 @@ const UpdateCampgroundPage = () => {
               </div>
             </div>
           )}
+        </CardContent>
+      </Card>
+      {/* DANGER ZONE */}
+      <Card className="border-destructive/30">
+        <CardHeader>
+          <CardTitle className="text-destructive">Danger zone</CardTitle>
+
+          <CardDescription>
+            Permanently delete this campground and its associated data. This
+            action cannot be undone.
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent>
+          <div className="flex flex-col gap-4 rounded-xl border border-destructive/20 bg-destructive/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-medium">Delete campground</p>
+
+              <p className="mt-1 text-sm text-muted-foreground">
+                Once deleted, this campground cannot be recovered.
+              </p>
+            </div>
+
+            <AlertDialog>
+              <AlertDialogTrigger
+                render={
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    disabled={isCampgroundDeleting}
+                    className="shrink-0"
+                  />
+                }
+              >
+                <Trash2 className="size-4" />
+                Delete campground
+              </AlertDialogTrigger>
+
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    Delete {campground.title}?
+                  </AlertDialogTitle>
+
+                  <AlertDialogDescription>
+                    This will permanently delete this campground and all of its
+                    associated data. This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={isCampgroundDeleting}>
+                    Cancel
+                  </AlertDialogCancel>
+
+                  <AlertDialogAction
+                    disabled={isCampgroundDeleting}
+                    onClick={() => handleDeleteCampground(campground._id)}
+                    className="bg-destructive text-white hover:bg-destructive/90"
+                  >
+                    <Trash2 className="size-4" />
+                    {isCampgroundDeleting ? "Deleting..." : "Delete campground"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
         </CardContent>
       </Card>
     </div>

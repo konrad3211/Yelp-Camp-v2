@@ -48,6 +48,10 @@ const HomePage = () => {
   ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
   useEffect(() => {
+    if (state?.action === "deleteCampground") {
+      toast.success("Campground has been deleted successfully!");
+    }
+
     if (state?.action === "updateCampground") {
       toast.warning("You are not the author");
     }
