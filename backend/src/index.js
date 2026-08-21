@@ -12,8 +12,7 @@ import { initializeSocket } from "./lib/socket.js";
 import { connectDB } from "./lib/db.js";
 import cors from "cors";
 import multer from "multer";
-import { Message } from "./models/message.model.js";
-import { Review } from "./models/review.model.js";
+
 dotenv.config();
 
 const app = express();
