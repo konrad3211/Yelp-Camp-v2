@@ -40,6 +40,9 @@ import { useForm, type SubmitHandler } from "react-hook-form";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import PageLoader from "@/components/PageLoader";
+import { blockDatesByOwner } from "@/api/booking.api";
+import BookingFormForOwner from "@/components/bookings/BookingFormForOwner";
+import type { Booking } from "@/types/booking";
 
 const UpdateCampgroundPage = () => {
   const { id } = useParams();
@@ -53,7 +56,7 @@ const UpdateCampgroundPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isImageDeleting, setIsImageDeleting] = useState(false);
   const [isCampgroundDeleting, setIsCampgroundDeleting] = useState(false);
-
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const {
     register,
     handleSubmit,
@@ -71,6 +74,12 @@ const UpdateCampgroundPage = () => {
     formState: { errors: imageErrors, isSubmitting: isImagesSubmitting },
   } = useForm<UpdateImagesFormData>({
     resolver: zodResolver(updateImagesSchema),
+  });
+
+  useEffect(() => {
+    const fetchBookings = async () => {
+      const bookings = await fe;
+    };
   });
 
   useEffect(() => {
@@ -110,6 +119,10 @@ const UpdateCampgroundPage = () => {
       price: campground.price,
     });
   }, [campground, reset]);
+
+  useEffect(() => {
+    if (!campground) return;
+  });
 
   if (!id) {
     return <Navigate to={"/"} replace />;
@@ -722,6 +735,8 @@ const UpdateCampgroundPage = () => {
             </AlertDialog>
           </div>
         </CardContent>
+        <BookingFormForOwner campgroundId={campground._id} />
+        {booking}
       </Card>
     </div>
   );

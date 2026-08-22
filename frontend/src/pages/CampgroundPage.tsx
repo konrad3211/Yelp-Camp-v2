@@ -520,7 +520,8 @@ const CampgroundPage = () => {
   const userClosestBooking = userBookings?.find(
     (booking) =>
       booking.campground._id === campground._id &&
-      booking.status === "confirmed",
+      booking.status === "confirmed" &&
+      booking.type === "booking",
   );
 
   const userClosestBookingDate = {

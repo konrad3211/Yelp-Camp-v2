@@ -55,3 +55,19 @@ export const cancelUserBooking = async (bookingId: string) => {
   const response = await api.patch(`/bookings/${bookingId}/cancel`);
   return response.data;
 };
+
+type blockDatesByOwnerData = {
+  startDate: string;
+  endDate: string;
+};
+
+export const blockDatesByOwner = async (
+  campgroundId: string,
+  data: blockDatesByOwnerData,
+) => {
+  const response = await api.post(
+    `/bookings/owner/campgrounds/${campgroundId}`,
+    data,
+  );
+  return response.data;
+};

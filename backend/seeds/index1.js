@@ -1,16 +1,15 @@
-import mongoose from "mongoose";
-import dotenv from "dotenv";
-import path from "path";
 import { fileURLToPath } from "url";
-
-import { Campground } from "../src/models/campground.model.js";
+import mongoose from "mongoose";
+import path from "path";
+import dotenv from "dotenv";
 import cloudinary from "../src/lib/cloudinary.js";
-import { campgroundSeeds } from "./campgrounds.js";
+import { campgroundSeeds } from "./campgrounds";
+import { Campground } from "../src/models/campground.model";
+
+const __fileName = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__fileName);
 
 dotenv.config();
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const seedImages = {
   lake: [
@@ -82,74 +81,43 @@ const getRandomItem = (array) => {
 
 const getSeedImages = (category, index) => {
   const images = seedImages[category];
-
   if (!images) {
-    throw new Error(`Invalid seed category: ${category}`);
+    throw new Error(`No seed images found for category ${category}`);
   }
   const offset = index % images.length;
-
   return [...images.slice(offset), ...images.slice(0, offset)];
 };
 
 const uploadSeedImages = async (campground, index) => {
   const imageNames = getSeedImages(campground.type, index);
-
-  const uploadedImages = await Promise.all(
+  const uploadedImages = Promise.all(
     imageNames.map(async (imageName, imageIndex) => {
-      const imagePath = path.join(__dirname, "images", imageName);
-
-      const result = await cloudinary.uploader.upload(imagePath, {
-        folder: `yelp-camp/seeds/campground-${index + 1}`,
-        public_id: `image-${imageIndex + 1}`,
+      const pathName = path.join(__dirname, "images", imageName);
+      const result = await cloudinary.uploader.upload(pathName, {
+        folder: `yelp-camp/seeds/campground${index + 1}`,
+        public_id: `image-${imageIndex}`,
         overwrite: true,
       });
-
       return {
         url: result.secure_url,
         filename: result.public_id,
       };
     }),
   );
-
   return uploadedImages;
 };
 
 const seedDatabase = async () => {
   try {
-    if (!process.env.MONGO_URI) {
-      throw new Error("MONGO_URI is missing");
-    }
-
-    if (!process.env.SEED_AUTHOR_ID) {
-      throw new Error("SEED_AUTHOR_ID is missing");
-    }
-
     await mongoose.connect(process.env.MONGO_URI);
-
-    console.log("Connected to database");
-
-    console.log("Deleting old seed images from Cloudinary...");
-
     await cloudinary.api.delete_resources_by_prefix("yelp-camp/seeds/");
-
-    console.log("Deleting old campgrounds...");
-
     await Campground.deleteMany({});
-
     for (let i = 0; i < campgroundSeeds.length; i++) {
       const campgroundData = campgroundSeeds[i];
-
-      console.log(
-        `Creating ${i + 1}/${campgroundSeeds.length}: ${campgroundData.title}`,
-      );
-
       const images = await uploadSeedImages(campgroundData, i);
-
       await Campground.create({
         title: campgroundData.title,
-
         description: getRandomItem(descriptions[campgroundData.type]),
-
         city: campgroundData.city,
         street: campgroundData.street,
         houseNumber: campgroundData.houseNumber,
@@ -166,15 +134,9 @@ const seedDatabase = async () => {
         author: process.env.SEED_AUTHOR_ID,
       });
     }
-
-    console.log(`Successfully seeded ${campgroundSeeds.length} campgrounds`);
   } catch (error) {
-    console.error("Failed to seed database:", error);
+    console.error("Failed to seeed campground", error);
   } finally {
     await mongoose.connection.close();
-
-    console.log("Database connection closed");
   }
 };
-
-seedDatabase();

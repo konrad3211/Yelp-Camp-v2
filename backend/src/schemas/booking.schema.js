@@ -9,3 +9,13 @@ export const createBookingSchema = z.object({
     error: "Check-out date is required",
   }),
 });
+
+export const createInactiveCampgroundDates = z.object({
+  startDate: z.string({
+    error: "Check-in date is required",
+  }),
+
+  endDate: z.string({
+    error: "Check-out date is required",
+  }),
+});

@@ -15,6 +15,7 @@ export type Booking = {
   numberOfNights: number;
   pricePerNight: number;
   totalPrice: number;
+  type: "booking" | "owner_block";
   status: "pending" | "confirmed" | "cancelled";
   paymentStatus: "unpaid" | "paid" | "failed" | "refunded";
 };

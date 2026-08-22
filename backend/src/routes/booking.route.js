@@ -12,9 +12,14 @@ import {
   getUserBooking,
   getUserBookings,
   payForBooking,
+  blockCampgroundDates,
+  getCampgoundBookingsForOwner,
 } from "../controllers/booking.controller.js";
 
-import { createBookingSchema } from "../schemas/booking.schema.js";
+import {
+  createBookingSchema,
+  createInactiveCampgroundDates,
+} from "../schemas/booking.schema.js";
 
 const router = Router();
 router.get("/", protect, catchAsync(getUserBookings));
@@ -25,12 +30,26 @@ router.get(
   catchAsync(getCampgroundAvailability),
 );
 
+router.get(
+  "/owner/campgrounds/:campgroundId",
+  protect,
+  catchAsync(getCampgoundBookingsForOwner),
+);
+
 router.post(
   "/campgrounds/:campgroundId",
   protect,
   validate(createBookingSchema),
   catchAsync(createBooking),
 );
+
+router.post(
+  "/owner/campgrounds/:campgroundId",
+  protect,
+  validate(createInactiveCampgroundDates),
+  catchAsync(blockCampgroundDates),
+);
+
 router.get("/:bookingId", protect, catchAsync(getBooking));
 
 router.patch("/:bookingId/pay", protect, catchAsync(payForBooking));

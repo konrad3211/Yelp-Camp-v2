@@ -83,6 +83,71 @@ export const createBooking = async (req, res) => {
   });
 };
 
+export const blockCampgroundDates = async (req, res) => {
+  const { campgroundId } = req.params;
+  const { startDate, endDate } = req.body;
+  const userId = req.user._id;
+
+  const campground = await Campground.findOne({
+    _id: campgroundId,
+    author: userId,
+  });
+
+  if (!campground) {
+    throw new AppError("Campground not found", 404);
+  }
+
+  const timeZone = "Europe/Warsaw";
+
+  const start = fromZonedTime(`${startDate}T00:00:00`, timeZone);
+
+  const end = fromZonedTime(`${endDate}T00:00:00`, timeZone);
+
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+    throw new AppError("Invalid dates", 409);
+  }
+
+  if (start >= end) {
+    throw new AppError("Start date must be earlier than end date", 400);
+  }
+
+  const isAlreadyBooked = await Booking.exists({
+    campground: campgroundId,
+    status: {
+      $in: ["pending", "confirmed"],
+    },
+    checkIn: {
+      $lt: end,
+    },
+    checkOut: {
+      $gt: start,
+    },
+  });
+
+  if (isAlreadyBooked) {
+    throw new AppError("Selected dates are already booked", 400);
+  }
+
+  const booking = await Booking.create({
+    campground: campgroundId,
+    user: userId,
+    checkIn: start,
+    checkOut: end,
+    numberOfNights: 1,
+    pricePerNight: 1,
+    totalPrice: 1,
+    type: "owner_block",
+    status: "confirmed",
+    paymentStatus: "unpaid",
+  });
+
+  res.status(201).json({
+    success: true,
+    message: "Booking has been created successfully",
+    data: booking,
+  });
+};
+
 export const payForBooking = async (req, res) => {
   const booking = await Booking.findOne({
     _id: req.params.bookingId,
@@ -182,6 +247,7 @@ export const getUserBookings = async (req, res) => {
 
   const userBookings = await Booking.find({
     user: userId,
+    type: "booking",
   })
     .populate({
       path: "campground",
@@ -197,6 +263,22 @@ export const getUserBookings = async (req, res) => {
   res.status(200).json({
     success: true,
     data: userBookings,
+  });
+};
+
+export const getCampgoundBookingsForOwner = async (req, res) => {
+  const { campgroundId } = req.params;
+  const userId = req.user._id;
+
+  const campgroundBookings = await Booking.find({
+    campground: campgroundId,
+    type: "owner_block",
+    user: userId,
+  });
+
+  res.status(200).json({
+    success: true,
+    data: campgroundBookings,
   });
 };
 
