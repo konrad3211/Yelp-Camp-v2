@@ -71,3 +71,20 @@ export const blockDatesByOwner = async (
   );
   return response.data;
 };
+
+export const getOwnerBlockedDates = async (campgroundId: string) => {
+  const response = await api.get(`/bookings/owner/campgrounds/${campgroundId}`);
+  return response.data;
+};
+
+export const unblockDatesByOwner = async (campgroundId: string) => {
+  const response = await api.delete(
+    `/bookings/owner/campgrounds/${campgroundId}`,
+  );
+  return response.data;
+};
+
+export const deleteOwnerBooking = async (bookingId: string) => {
+  const response = await api.delete(`/bookings/owner/${bookingId}`);
+  return response.data;
+};

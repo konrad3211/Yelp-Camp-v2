@@ -14,6 +14,7 @@ import {
   payForBooking,
   blockCampgroundDates,
   getCampgoundBookingsForOwner,
+  cancelOwnerBooking,
 } from "../controllers/booking.controller.js";
 
 import {
@@ -55,5 +56,7 @@ router.get("/:bookingId", protect, catchAsync(getBooking));
 router.patch("/:bookingId/pay", protect, catchAsync(payForBooking));
 
 router.patch("/:bookingId/cancel", protect, catchAsync(cancelUserBooking));
+
+router.delete("/owner/:bookingId", protect, catchAsync(cancelOwnerBooking));
 
 export default router;

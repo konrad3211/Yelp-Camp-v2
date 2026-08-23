@@ -99,9 +99,9 @@ export const blockCampgroundDates = async (req, res) => {
 
   const timeZone = "Europe/Warsaw";
 
-  const start = fromZonedTime(`${startDate}T00:00:00`, timeZone);
+  const start = fromZonedTime(`${startDate}T15:00:00`, timeZone);
 
-  const end = fromZonedTime(`${endDate}T00:00:00`, timeZone);
+  const end = fromZonedTime(`${endDate}T12:00:00`, timeZone);
 
   if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
     throw new AppError("Invalid dates", 409);
@@ -309,5 +309,25 @@ export const cancelUserBooking = async (req, res) => {
   res.status(200).json({
     success: true,
     data: booking,
+  });
+};
+
+export const cancelOwnerBooking = async (req, res) => {
+  const { bookingId } = req.params;
+  const userId = req.user._id;
+
+  const booking = await Booking.findOneAndDelete({
+    _id: bookingId,
+    user: userId,
+    type: "owner_block",
+  });
+
+  if (!booking) {
+    throw new AppError("Booking not found", 404);
+  }
+
+  res.status(200).json({
+    success: true,
+    message: "Booking deleted successfully",
   });
 };

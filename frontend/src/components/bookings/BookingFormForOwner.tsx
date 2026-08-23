@@ -18,10 +18,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-import type { UnavailableBooking } from "@/types/booking";
+import type { Booking, UnavailableBooking } from "@/types/booking";
 
 type BookingFormForOwnerProps = {
   campgroundId: string;
+  setBookings: React.Dispatch<React.SetStateAction<Booking[]>>;
+  bookings: Booking[];
 };
 
 const formatDateForApi = (date: Date) => {
@@ -32,12 +34,16 @@ const formatDateForApi = (date: Date) => {
   return `${year}-${month}-${day}`;
 };
 
-const BookingFormForOwner = ({ campgroundId }: BookingFormForOwnerProps) => {
+const BookingFormForOwner = ({
+  campgroundId,
+  setBookings,
+  bookings,
+}: BookingFormForOwnerProps) => {
   const [selectedRange, setSelectedRange] = useState<DateRange | undefined>();
 
-  const [unavailableBookings, setUnavailableBookings] = useState<
-    UnavailableBooking[]
-  >([]);
+  // const [unavailableBookings, setUnavailableBookings] = useState<
+  //   UnavailableBooking[]
+  // >([]);
 
   const [isLoadingAvailability, setIsLoadingAvailability] = useState(true);
   const [isBlocking, setIsBlocking] = useState(false);
@@ -47,10 +53,7 @@ const BookingFormForOwner = ({ campgroundId }: BookingFormForOwnerProps) => {
     try {
       setIsLoadingAvailability(true);
       setError("");
-
-      const data = await getCampgroundAvailability(campgroundId);
-
-      setUnavailableBookings(data.data);
+      await getCampgroundAvailability(campgroundId);
     } catch (error) {
       console.error("Failed to fetch campground availability:", error);
 
@@ -64,21 +67,19 @@ const BookingFormForOwner = ({ campgroundId }: BookingFormForOwnerProps) => {
     fetchAvailability();
   }, [campgroundId]);
 
-  const disabledBookingRanges: Matcher[] = unavailableBookings.map(
-    (booking) => {
-      const checkIn = new Date(booking.checkIn);
-      const checkOut = new Date(booking.checkOut);
+  const disabledBookingRanges: Matcher[] = bookings.map((booking) => {
+    const checkIn = new Date(booking.checkIn);
+    const checkOut = new Date(booking.checkOut);
 
-      const lastOccupiedDay = new Date(checkOut);
+    const lastOccupiedDay = new Date(checkOut);
 
-      lastOccupiedDay.setDate(lastOccupiedDay.getDate() - 1);
+    lastOccupiedDay.setDate(lastOccupiedDay.getDate() - 1);
 
-      return {
-        from: checkIn,
-        to: lastOccupiedDay,
-      };
-    },
-  );
+    return {
+      from: checkIn,
+      to: lastOccupiedDay,
+    };
+  });
 
   const disabledDates: Matcher[] = [
     {
@@ -99,10 +100,12 @@ const BookingFormForOwner = ({ campgroundId }: BookingFormForOwnerProps) => {
       setIsBlocking(true);
       setError("");
 
-      await blockDatesByOwner(campgroundId, {
+      const data = await blockDatesByOwner(campgroundId, {
         startDate: formatDateForApi(startDate),
         endDate: formatDateForApi(endDate),
       });
+
+      setBookings((prev) => [...prev, data.data]);
 
       toast.success("Dates blocked successfully");
 

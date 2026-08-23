@@ -5,7 +5,16 @@ import {
   updateCampground,
   updateCampgroundImages,
 } from "@/api/campground.api";
-import { ImagePlus, MapPin, Pencil, Save, Trash2, Upload } from "lucide-react";
+import {
+  ImagePlus,
+  MapPin,
+  Pencil,
+  Save,
+  Trash2,
+  Upload,
+  CalendarDays,
+  X,
+} from "lucide-react";
 
 import {
   Card,
@@ -40,7 +49,7 @@ import { useForm, type SubmitHandler } from "react-hook-form";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import PageLoader from "@/components/PageLoader";
-import { blockDatesByOwner } from "@/api/booking.api";
+import { deleteOwnerBooking, getOwnerBlockedDates } from "@/api/booking.api";
 import BookingFormForOwner from "@/components/bookings/BookingFormForOwner";
 import type { Booking } from "@/types/booking";
 
@@ -57,6 +66,10 @@ const UpdateCampgroundPage = () => {
   const [isImageDeleting, setIsImageDeleting] = useState(false);
   const [isCampgroundDeleting, setIsCampgroundDeleting] = useState(false);
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [isBookingsLoading, setIsBookingsLoading] = useState(true);
+  const [isBookingDeleting, setIsBookingDeleting] = useState(false);
+  const [bookingDeletingError, setBookingDeletingError] = useState("");
+
   const {
     register,
     handleSubmit,
@@ -77,10 +90,28 @@ const UpdateCampgroundPage = () => {
   });
 
   useEffect(() => {
-    const fetchBookings = async () => {
-      const bookings = await fe;
+    if (!id) {
+      setFetchError("Campground id is missing");
+      setIsBookingsLoading(false);
+      return;
+    }
+
+    if (!currentUser) {
+      setIsBookingsLoading(false);
+      return;
+    }
+    const fetchOwnerBookings = async () => {
+      try {
+        const bookings = await getOwnerBlockedDates(id);
+        setBookings(bookings.data);
+      } catch (error) {
+        console.error("Failed to fetch bookings", error);
+      } finally {
+        setIsBookingsLoading(false);
+      }
     };
-  });
+    fetchOwnerBookings();
+  }, [id, currentUser]);
 
   useEffect(() => {
     if (!id) {
@@ -209,6 +240,21 @@ const UpdateCampgroundPage = () => {
     }
   };
 
+  const handleDeleteOwnerBooking = async (campgroundId: string) => {
+    try {
+      setIsBookingDeleting(true);
+      await deleteOwnerBooking(campgroundId);
+      setBookings((prevBookings) =>
+        prevBookings.filter((booking) => booking._id !== campgroundId),
+      );
+    } catch (error) {
+      console.error("Failed to delete an owner booking", error);
+      setBookingDeletingError("Failed to delete an owner booking");
+    } finally {
+      setIsBookingDeleting(false);
+    }
+  };
+
   const availableImagesSlots = 8 - (campground?.images?.length ?? 0);
 
   if (isLoading) {
@@ -268,7 +314,7 @@ const UpdateCampgroundPage = () => {
             </h1>
 
             <p className="mt-1 text-muted-foreground">
-              Update the details and photos of your campground.
+              Update your campground details, availability and photos.
             </p>
           </div>
         </div>
@@ -477,6 +523,177 @@ const UpdateCampgroundPage = () => {
         </div>
       </form>
 
+      {/* AVAILABILITY */}
+      <div className="space-y-6">
+        <div>
+          <div className="flex items-center gap-2">
+            <CalendarDays className="size-5 text-muted-foreground" />
+
+            <h2 className="text-xl font-semibold">Availability</h2>
+          </div>
+
+          <p className="mt-1 text-sm text-muted-foreground">
+            Manage dates when your campground should not be available for
+            guests.
+          </p>
+        </div>
+
+        <BookingFormForOwner
+          campgroundId={campground._id}
+          setBookings={setBookings}
+          bookings={bookings}
+        />
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <CardTitle>Blocked dates</CardTitle>
+
+                <CardDescription className="mt-1">
+                  Dates you have manually marked as unavailable.
+                </CardDescription>
+              </div>
+
+              {!isBookingsLoading && bookings.length > 0 && (
+                <span className="flex min-w-8 items-center justify-center rounded-full bg-muted px-2.5 py-1 text-xs font-medium">
+                  {bookings.length}
+                </span>
+              )}
+            </div>
+          </CardHeader>
+
+          <CardContent>
+            {isBookingsLoading ? (
+              <div className="flex items-center justify-center py-10">
+                <div className="size-5 animate-spin rounded-full border-2 border-muted border-t-foreground" />
+              </div>
+            ) : bookings.length === 0 ? (
+              <div className="rounded-xl border border-dashed px-6 py-10 text-center">
+                <div className="mx-auto flex size-10 items-center justify-center rounded-full bg-muted">
+                  <CalendarDays className="size-5 text-muted-foreground" />
+                </div>
+
+                <p className="mt-4 font-medium">No blocked dates</p>
+
+                <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
+                  You haven't manually blocked any dates for this campground
+                  yet.
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-hidden rounded-xl border">
+                {bookings.map((booking, index) => {
+                  const startDate = new Date(booking.checkIn);
+                  const endDate = new Date(booking.checkOut);
+
+                  const formattedStartDate = startDate.toLocaleDateString(
+                    "pl-PL",
+                    {
+                      timeZone: "Europe/Warsaw",
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                    },
+                  );
+
+                  const formattedEndDate = endDate.toLocaleDateString("pl-PL", {
+                    timeZone: "Europe/Warsaw",
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                  });
+
+                  return (
+                    <div
+                      key={booking._id}
+                      className={`flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between ${
+                        index !== bookings.length - 1 ? "border-b" : ""
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+                          <CalendarDays className="size-4 text-muted-foreground" />
+                        </div>
+
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2 text-sm font-medium">
+                            <span>{formattedStartDate}</span>
+
+                            <span className="text-muted-foreground">→</span>
+
+                            <span>{formattedEndDate}</span>
+                          </div>
+
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Blocked by you
+                          </p>
+                        </div>
+                      </div>
+
+                      <AlertDialog>
+                        <AlertDialogTrigger
+                          render={
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              disabled={isBookingDeleting}
+                              className="shrink-0 text-muted-foreground hover:text-destructive"
+                            />
+                          }
+                        >
+                          <X className="size-4" />
+                          Remove block
+                        </AlertDialogTrigger>
+
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>
+                              Remove blocked dates?
+                            </AlertDialogTitle>
+
+                            <AlertDialogDescription>
+                              {formattedStartDate} – {formattedEndDate} will
+                              become available for guests to reserve again.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+
+                          <AlertDialogFooter>
+                            <AlertDialogCancel disabled={isBookingDeleting}>
+                              Cancel
+                            </AlertDialogCancel>
+
+                            <AlertDialogAction
+                              disabled={isBookingDeleting}
+                              onClick={() =>
+                                handleDeleteOwnerBooking(booking._id)
+                              }
+                            >
+                              {isBookingDeleting
+                                ? "Removing..."
+                                : "Remove block"}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {bookingDeletingError && (
+              <div className="mt-4 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3">
+                <p className="text-sm text-destructive">
+                  {bookingDeletingError}
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
       {/* PHOTOS */}
       <Card>
         <CardHeader>
@@ -497,6 +714,7 @@ const UpdateCampgroundPage = () => {
             </div>
           </div>
         </CardHeader>
+
         <CardContent className="space-y-6">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {campground.images.map((img, index) => (
@@ -669,6 +887,7 @@ const UpdateCampgroundPage = () => {
           )}
         </CardContent>
       </Card>
+
       {/* DANGER ZONE */}
       <Card className="border-destructive/30">
         <CardHeader>
@@ -735,8 +954,6 @@ const UpdateCampgroundPage = () => {
             </AlertDialog>
           </div>
         </CardContent>
-        <BookingFormForOwner campgroundId={campground._id} />
-        {booking}
       </Card>
     </div>
   );
