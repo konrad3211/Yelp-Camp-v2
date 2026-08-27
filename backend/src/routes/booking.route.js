@@ -13,8 +13,9 @@ import {
   getUserBookings,
   payForBooking,
   blockCampgroundDates,
-  getCampgoundBookingsForOwner,
+  getCampgoundBookingsBlockedByOwner,
   cancelOwnerBooking,
+  getCampgroundBookings,
 } from "../controllers/booking.controller.js";
 
 import {
@@ -24,6 +25,7 @@ import {
 
 const router = Router();
 router.get("/", protect, catchAsync(getUserBookings));
+router.get("/:campgroundId", protect, catchAsync(getCampgroundBookings));
 router.get("/campgrounds/:campgroundId", protect, catchAsync(getUserBooking));
 
 router.get(
@@ -34,7 +36,7 @@ router.get(
 router.get(
   "/owner/campgrounds/:campgroundId",
   protect,
-  catchAsync(getCampgoundBookingsForOwner),
+  catchAsync(getCampgoundBookingsBlockedByOwner),
 );
 
 router.post(

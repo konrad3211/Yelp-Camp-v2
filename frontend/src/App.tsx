@@ -21,6 +21,7 @@ import RegisterPage from "./pages/RegisterPage";
 import UserProfilePage from "./pages/UserProfilePage";
 import PageLoader from "./components/PageLoader";
 import UserCampgroundsPage from "./pages/UserCampgroundsPage";
+import CampgroundBookingsPage from "./pages/CampgroundBookingsPage";
 
 const App = () => {
   const user = useAuthStore((state) => state.user);
@@ -122,6 +123,11 @@ const App = () => {
         <Route
           path="/campgrounds/:id/update"
           element={<UpdateCampgroundPage />}
+        />
+
+        <Route
+          path="/:campgroundId/availability"
+          element={<CampgroundBookingsPage />}
         />
 
         <Route

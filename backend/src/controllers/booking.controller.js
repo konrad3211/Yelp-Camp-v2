@@ -266,7 +266,31 @@ export const getUserBookings = async (req, res) => {
   });
 };
 
-export const getCampgoundBookingsForOwner = async (req, res) => {
+export const getCampgroundBookings = async (req, res) => {
+  const userId = req.user._id;
+  const { campgroundId } = req.params;
+
+  const campground = await Campground.findOne({
+    author: userId,
+    _id: campgroundId,
+  });
+
+  if (!campground) {
+    throw new AppError("Booking not found", 404);
+  }
+
+  const bookings = await Booking.find({
+    campground: campground._id,
+    status: { $in: ["confirmed", "pending"] },
+  }).populate("user");
+
+  res.status(200).json({
+    success: true,
+    data: bookings,
+  });
+};
+
+export const getCampgoundBookingsBlockedByOwner = async (req, res) => {
   const { campgroundId } = req.params;
   const userId = req.user._id;
 
@@ -308,6 +332,41 @@ export const cancelUserBooking = async (req, res) => {
 
   res.status(200).json({
     success: true,
+    data: booking,
+  });
+};
+
+export const cancelUserBookingByOwner = async (req, res) => {
+  const userId = req.user._id;
+  const { bookingId } = req.params;
+
+  const booking = await Booking.findOne({
+    _id: bookingId,
+  }).populate({
+    path: "campground",
+    populate: {
+      path: "author",
+      select: "_id",
+    },
+  });
+
+  if (!booking) {
+    throw new AppError("Booking not found", 404);
+  }
+
+  if (!booking.campground.author._id.equals(userId)) {
+    throw new AppError("You are not the owner", 403);
+  }
+
+  booking.set({
+    status: "canceled",
+  });
+
+  await booking.save();
+
+  res.status(200).json({
+    success: true,
+    message: "Booking has been cancelled successfully",
     data: booking,
   });
 };
