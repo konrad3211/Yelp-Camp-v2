@@ -126,7 +126,7 @@ const App = () => {
         />
 
         <Route
-          path="/:campgroundId/availability"
+          path="/campgrounds/:campgroundId/bookings"
           element={<CampgroundBookingsPage />}
         />
 

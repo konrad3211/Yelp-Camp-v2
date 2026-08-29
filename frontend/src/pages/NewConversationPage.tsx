@@ -1,5 +1,6 @@
 import { useState, type SubmitEventHandler } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { MessageSquareText } from "lucide-react";
 
 import { startConversation } from "@/api/conversation.api";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,6 @@ const NewConversationPage = () => {
   const location = useLocation();
 
   const state = location.state as NewConversationLocationState | null;
-
   const campgroundId = state?.campgroundId;
 
   const [messageText, setMessageText] = useState("");
@@ -53,24 +53,70 @@ const NewConversationPage = () => {
   };
 
   return (
-    <section className="mx-auto max-w-2xl space-y-6">
-      <h1 className="text-2xl font-semibold">Contact owner</h1>
+    <section className="mx-auto flex min-h-[70vh] max-w-3xl items-center px-4 py-10">
+      <div className="w-full rounded-xl border bg-card p-6 shadow-sm sm:p-8">
+        <div className="mb-6 flex items-start gap-4">
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <MessageSquareText className="size-5" />
+          </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <textarea
-          value={messageText}
-          onChange={(event) => setMessageText(event.target.value)}
-          placeholder="Write your message..."
-          disabled={isSending}
-          className="min-h-40 w-full rounded-md border bg-background px-3 py-2"
-        />
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Contact owner
+            </h1>
 
-        {error && <p className="text-sm text-destructive">{error}</p>}
+            <p className="mt-1 text-sm text-muted-foreground">
+              Send a message to the campground owner. They’ll be able to reply
+              in your conversations.
+            </p>
+          </div>
+        </div>
 
-        <Button type="submit" disabled={isSending || !messageText.trim()}>
-          {isSending ? "Sending..." : "Send message"}
-        </Button>
-      </form>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="space-y-2">
+            <label
+              htmlFor="message"
+              className="text-sm font-medium leading-none"
+            >
+              Message
+            </label>
+
+            <textarea
+              id="message"
+              value={messageText}
+              onChange={(event) => setMessageText(event.target.value)}
+              placeholder="Hi, I’d like to ask about..."
+              disabled={isSending}
+              maxLength={1000}
+              className="min-h-44 w-full resize-none rounded-lg border bg-background px-4 py-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-50"
+            />
+
+            <div className="flex justify-between">
+              <div>
+                {error && (
+                  <p className="text-sm font-medium text-destructive">
+                    {error}
+                  </p>
+                )}
+              </div>
+
+              <p className="text-xs text-muted-foreground">
+                {messageText.length}/1000
+              </p>
+            </div>
+          </div>
+
+          <div className="flex justify-end border-t pt-5">
+            <Button
+              type="submit"
+              disabled={isSending || !messageText.trim()}
+              className="min-w-32"
+            >
+              {isSending ? "Sending..." : "Send message"}
+            </Button>
+          </div>
+        </form>
+      </div>
     </section>
   );
 };
