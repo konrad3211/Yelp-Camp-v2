@@ -56,6 +56,80 @@ export const startConversation = async (req, res) => {
   });
 };
 
+export const startConvesartionWithGuest = async (req, res) => {
+  const ownerIdfromValidation = req.user._id;
+  const { guestId, campgroundId } = req.params;
+  const { text } = req.body;
+
+  const campground = await Campground.findById(campgroundId);
+
+  if (!campground) {
+    throw new AppError("Campground not found", 404);
+  }
+
+  const ownerId = campground.author;
+
+  if (!ownerId.equals(ownerIdfromValidation)) {
+    throw new AppError("You are not the owner", 400);
+  }
+
+  let conversation = await Conversation.findOne({
+    campground: campgroundId,
+    participants: {
+      $all: [guestId, ownerId],
+    },
+  });
+
+  if (!conversation) {
+    conversation = await Conversation.create({
+      campground: campgroundId,
+      participants: [guestId, ownerId],
+    });
+  }
+
+  const message = await Message.create({
+    conversation: conversation._id,
+    sender: ownerId,
+    text,
+  });
+
+  conversation.lastMessage = message._id;
+
+  await conversation.save();
+
+  await message.populate("sender", "username fullName imageUrl");
+
+  res.status(201).json({
+    success: true,
+    message: "Conversation started successfully",
+    data: {
+      conversation,
+      message,
+    },
+  });
+};
+
+export const isThereConvesration = async (req, res) => {
+  const userId = req.user._id;
+  const { guestId, campgroundId } = req.params;
+
+  if (!userId && !guestId && !campgroundId) {
+    throw new AppError("There are no params to check a conversation", 400);
+  }
+
+  const conversation = await Conversation.findOne({
+    campground: campgroundId,
+    participants: {
+      $all: [userId, guestId],
+    },
+  });
+
+  res.status(200).json({
+    success: true,
+    data: conversation,
+  });
+};
+
 export const createMessage = async (req, res) => {
   const { text } = req.body;
   const userId = req.user._id;

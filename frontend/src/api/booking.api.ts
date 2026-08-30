@@ -90,6 +90,8 @@ export const deleteOwnerBooking = async (bookingId: string) => {
 };
 
 export const getCampgroundBookings = async (campgroundId: string) => {
-  const response = await api.get(`/bookings/${campgroundId}`);
+  const response = await api.get(
+    `/bookings/campgrounds/${campgroundId}/bookings`,
+  );
   return response.data;
 };

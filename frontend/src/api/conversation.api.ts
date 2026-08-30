@@ -1,7 +1,7 @@
 import { api } from "./axios";
 import type {
   CreateConversationResponse,
-  getConversationResponse,
+  GetConversationResponse,
 } from "../types/conversation";
 import type {
   CreateMessageData,
@@ -11,7 +11,17 @@ import type {
 } from "../types/message";
 
 export const getConversations = async () => {
-  const response = await api.get<getConversationResponse>("/conversations");
+  const response = await api.get<GetConversationResponse>("/conversations");
+  return response.data;
+};
+
+export const checkIsThereConversation = async (
+  campgroundId: string,
+  guestId: string,
+) => {
+  const response = await api.get(
+    `/conversations/${campgroundId}/${guestId}/check`,
+  );
   return response.data;
 };
 
@@ -69,6 +79,19 @@ export const startConversation = async (
   data: StartConversationData,
 ) => {
   const response = await api.post(`/conversations/start/${campgroundId}`, data);
+
+  return response.data;
+};
+
+export const startConversationWithGuest = async (
+  campgroundId: string,
+  guestId: string,
+  data: StartConversationData,
+) => {
+  const response = await api.post(
+    `/conversations/start/${campgroundId}/${guestId}`,
+    data,
+  );
 
   return response.data;
 };

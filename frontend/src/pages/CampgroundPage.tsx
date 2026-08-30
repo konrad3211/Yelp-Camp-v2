@@ -95,7 +95,6 @@ const CampgroundPage = () => {
     const canUserPostReview = async () => {
       try {
         const data = await getUserBooking(id);
-        console.log(data.data);
         setUserBooking(data.data);
       } catch (error) {
         console.error("Cannot check if user has any reviews:", error);
@@ -481,6 +480,7 @@ const CampgroundPage = () => {
         state: {
           campgroundId: campground._id,
           action: "contactOwner",
+          guest: currentUser,
         },
       });
 
@@ -494,6 +494,7 @@ const CampgroundPage = () => {
     navigate(`/conversations/new`, {
       state: {
         campgroundId: campground._id,
+        guest: currentUser,
       },
     });
   };

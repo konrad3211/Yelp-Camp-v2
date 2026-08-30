@@ -227,6 +227,23 @@ const UserCampgroundsPage = () => {
 
                       {isOwner && (
                         <Button
+                          variant="outline"
+                          nativeButton={false}
+                          render={
+                            <Link
+                              to={`/campgrounds/${campground._id}/bookings`}
+                              state={{
+                                from: `/campgrounds/user/${userId}`,
+                              }}
+                            />
+                          }
+                        >
+                          View Bookings
+                        </Button>
+                      )}
+
+                      {isOwner && (
+                        <Button
                           nativeButton={false}
                           render={
                             <Link

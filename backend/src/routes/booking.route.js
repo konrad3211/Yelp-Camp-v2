@@ -25,7 +25,11 @@ import {
 
 const router = Router();
 router.get("/", protect, catchAsync(getUserBookings));
-router.get("/:campgroundId", protect, catchAsync(getCampgroundBookings));
+router.get(
+  "/campgrounds/:campgroundId/bookings",
+  protect,
+  catchAsync(getCampgroundBookings),
+);
 router.get("/campgrounds/:campgroundId", protect, catchAsync(getUserBooking));
 
 router.get(

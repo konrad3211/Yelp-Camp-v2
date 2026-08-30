@@ -1,12 +1,20 @@
-import { useState, type SubmitEventHandler } from "react";
+import { useEffect, useState, type SubmitEventHandler } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { MessageSquareText } from "lucide-react";
 
-import { startConversation } from "@/api/conversation.api";
+import {
+  checkIsThereConversation,
+  startConversation,
+  startConversationWithGuest,
+} from "@/api/conversation.api";
 import { Button } from "@/components/ui/button";
+import type { Conversation } from "@/types/conversation";
+import type { User } from "@/types/user";
 
 type NewConversationLocationState = {
   campgroundId?: string;
+  guest?: User;
+  action?: string;
 };
 
 const NewConversationPage = () => {
@@ -15,16 +23,68 @@ const NewConversationPage = () => {
 
   const state = location.state as NewConversationLocationState | null;
   const campgroundId = state?.campgroundId;
+  const guestId = state?.guest?._id;
 
+  const [conversation, setConversation] = useState<Conversation | null>(null);
   const [messageText, setMessageText] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState("");
+
+  console.log(state.action);
+
+  useEffect(() => {
+    const isConversation = async () => {
+      try {
+        const data = await checkIsThereConversation(campgroundId, guestId);
+        setConversation(data.data);
+      } catch (error) {
+        console.error("Failed to check if there is a conversation", error);
+      }
+    };
+    isConversation();
+  }, [campgroundId, guestId]);
 
   if (!campgroundId) {
     return <Navigate to="/" replace />;
   }
 
-  const handleSubmit: SubmitEventHandler<HTMLFormElement> = async (event) => {
+  if (conversation) {
+    return <Navigate to={`/conversations/${conversation._id}`} replace />;
+  }
+
+  const handleSubmitContactOwner: SubmitEventHandler<HTMLFormElement> = async (
+    event,
+  ) => {
+    event.preventDefault();
+
+    const trimmedText = messageText.trim();
+
+    if (!trimmedText || isSending) {
+      return;
+    }
+
+    try {
+      setIsSending(true);
+      setError("");
+
+      const data = await startConversationWithGuest(campgroundId, guestId, {
+        text: trimmedText,
+      });
+
+      navigate(`/conversations/${data.data.conversation._id}`, {
+        replace: true,
+      });
+    } catch (error) {
+      console.error("Failed to start conversation:", error);
+      setError("Failed to send message");
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const handleSubmitContactGuest: SubmitEventHandler<HTMLFormElement> = async (
+    event,
+  ) => {
     event.preventDefault();
 
     const trimmedText = messageText.trim();
@@ -72,7 +132,14 @@ const NewConversationPage = () => {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form
+          onSubmit={
+            state.action === "contactGuest"
+              ? handleSubmitContactOwner
+              : handleSubmitContactGuest
+          }
+          className="space-y-5"
+        >
           <div className="space-y-2">
             <label
               htmlFor="message"
