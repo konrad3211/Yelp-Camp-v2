@@ -1,3 +1,4 @@
+import { getBookingsStats } from "@/api/booking.api";
 import { getUserCampgrounds } from "@/api/campground.api";
 import PageLoader from "@/components/PageLoader";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ const UserCampgroundsPage = () => {
 
   const currentUser = useAuthStore((state) => state.user);
   const [campgrounds, setCampgrounds] = useState<Campground[]>([]);
+  const [bookingStats, setBookingStats] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -40,6 +42,18 @@ const UserCampgroundsPage = () => {
     };
     fetchCampgrounds();
   }, [currentUser, userId]);
+
+  useEffect(() => {
+    const fetchBookingsCount = async () => {
+      try {
+        const data = await getBookingsStats();
+        setBookingStats(data.data);
+      } catch (error) {
+        console.error("Failed to fetch number of bookings");
+      }
+    };
+    fetchBookingsCount();
+  }, []);
 
   if (!currentUser) {
     return (
@@ -124,7 +138,6 @@ const UserCampgroundsPage = () => {
       </section>
     );
   }
-
   return (
     <section className="mx-auto max-w-6xl space-y-8 px-4 py-10">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -135,7 +148,7 @@ const UserCampgroundsPage = () => {
 
           <p className="mt-2 text-muted-foreground">
             {currentUser._id === userId
-              ? "Manage the campgrounds you've added to YelpCamp."
+              ? "Manage your listings, bookings and availability."
               : "Browse campgrounds added by this user."}
           </p>
         </div>
@@ -150,34 +163,39 @@ const UserCampgroundsPage = () => {
 
       <div className="space-y-5">
         {campgrounds.map((campground) => {
+          const stats = bookingStats.find(
+            (item) => item._id === campground._id,
+          );
+
           const mainImage = campground.images[0];
           const isOwner = currentUser._id === campground.author._id;
+
+          const bookingsCount = stats?.bookingsCount ?? 0;
+          const revenue = stats?.revenue ?? 0;
 
           return (
             <Card
               key={campground._id}
               className="overflow-hidden p-0 transition-shadow hover:shadow-md"
             >
-              <div className="grid md:grid-cols-[280px_1fr]">
-                <div className="relative min-h-56 bg-muted md:min-h-full">
+              <div className="grid md:grid-cols-[290px_1fr]">
+                <div className="relative min-h-56 overflow-hidden bg-muted md:min-h-full">
                   {mainImage ? (
                     <img
                       src={mainImage.url}
                       alt={campground.title}
-                      className="absolute inset-0 h-full w-full object-cover"
+                      className="absolute inset-0 h-full w-full object-cover transition duration-300 hover:scale-[1.02]"
                     />
                   ) : (
                     <div className="flex h-full min-h-56 items-center justify-center">
-                      <span className="text-sm text-muted-foreground">
-                        No image
-                      </span>
+                      <TentTree className="size-7 text-muted-foreground" />
                     </div>
                   )}
                 </div>
 
                 <div className="flex min-w-0 flex-col">
                   <CardHeader className="px-6 pb-4 pt-6">
-                    <div className="flex items-start justify-between gap-4">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                       <div className="min-w-0">
                         <CardTitle className="text-2xl">
                           {campground.title}
@@ -192,7 +210,7 @@ const UserCampgroundsPage = () => {
                         </div>
                       </div>
 
-                      <div className="shrink-0 text-right">
+                      <div className="shrink-0 sm:text-right">
                         <p className="text-xl font-bold">
                           {campground.price} zł
                         </p>
@@ -205,18 +223,42 @@ const UserCampgroundsPage = () => {
                   </CardHeader>
 
                   <CardContent className="flex-1 px-6">
-                    <p className="line-clamp-3 text-sm leading-6 text-muted-foreground">
+                    <p className="line-clamp-2 text-sm leading-6 text-muted-foreground">
                       {campground.description}
                     </p>
+
+                    {isOwner && (
+                      <div className="mt-5 grid grid-cols-2 gap-3">
+                        <div className="rounded-xl border bg-muted/20 p-3">
+                          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                            Total bookings
+                          </p>
+
+                          <p className="mt-1 text-xl font-semibold">
+                            {bookingsCount}
+                          </p>
+                        </div>
+
+                        <div className="rounded-xl border bg-muted/20 p-3">
+                          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                            Revenue
+                          </p>
+
+                          <p className="mt-1 text-xl font-semibold">
+                            {revenue.toLocaleString("pl-PL")} zł
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
 
-                  <CardFooter className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t bg-muted/10 px-6 py-4">
+                  <CardFooter className="mt-5 flex flex-col gap-3 border-t bg-muted/10 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="text-xs text-muted-foreground">
                       {campground.images.length}{" "}
                       {campground.images.length === 1 ? "photo" : "photos"}
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <Button
                         variant="outline"
                         nativeButton={false}
@@ -238,7 +280,7 @@ const UserCampgroundsPage = () => {
                             />
                           }
                         >
-                          View Bookings
+                          View bookings
                         </Button>
                       )}
 

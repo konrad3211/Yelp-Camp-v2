@@ -359,7 +359,7 @@ export const cancelUserBookingByOwner = async (req, res) => {
   }
 
   booking.set({
-    status: "canceled",
+    status: "cancelled",
   });
 
   await booking.save();
@@ -388,5 +388,50 @@ export const cancelOwnerBooking = async (req, res) => {
   res.status(200).json({
     success: true,
     message: "Booking deleted successfully",
+  });
+};
+
+export const countCampgroundBookings = async (req, res) => {
+  const userId = req.user._id;
+
+  const campground = await Campground.find({
+    author: userId,
+  }).select("_id");
+
+  const campgroundIds = campground.map((campground) => campground._id);
+
+  const count = await Booking.aggregate([
+    {
+      $match: {
+        campground: {
+          $in: campgroundIds,
+        },
+        type: "booking",
+        status: {
+          $in: ["confirmed"],
+        },
+      },
+    },
+    {
+      $group: {
+        _id: "$campground",
+        revenue: {
+          $sum: "$totalPrice",
+        },
+        bookingsCount: {
+          $sum: 1,
+        },
+      },
+    },
+    {
+      $sort: {
+        revenue: -1,
+      },
+    },
+  ]);
+
+  res.status(200).json({
+    success: true,
+    data: count,
   });
 };

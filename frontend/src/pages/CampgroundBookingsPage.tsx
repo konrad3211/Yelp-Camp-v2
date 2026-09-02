@@ -1,4 +1,7 @@
-import { getCampgroundBookings } from "@/api/booking.api";
+import {
+  cancelUserBookingByOwner,
+  getCampgroundBookings,
+} from "@/api/booking.api";
 import PageLoader from "@/components/PageLoader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -29,6 +32,7 @@ const CampgroundBookingsPage = () => {
   const [campgroundBookings, setCampgroundBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (!campgroundId) return;
@@ -51,6 +55,20 @@ const CampgroundBookingsPage = () => {
 
     fetchCampgroundBookings();
   }, [campgroundId]);
+
+  const cancelBooking = async (bookingId: string) => {
+    try {
+      setIsDeleting(true);
+      await cancelUserBookingByOwner(bookingId);
+      setCampgroundBookings((prevBookings) =>
+        prevBookings.filter((booking) => booking._id !== bookingId),
+      );
+    } catch (error) {
+      console.error("Failed to cancel a booking", error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   if (isLoading) {
     return <PageLoader />;
@@ -241,6 +259,8 @@ const CampgroundBookingsPage = () => {
                     {(booking.status === "confirmed" ||
                       booking.status === "pending") && (
                       <Button
+                        disabled={isDeleting}
+                        onClick={() => cancelBooking(booking._id)}
                         variant="outline"
                         className="text-destructive hover:text-destructive"
                       >

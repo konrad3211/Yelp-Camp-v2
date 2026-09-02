@@ -16,6 +16,8 @@ import {
   getCampgoundBookingsBlockedByOwner,
   cancelOwnerBooking,
   getCampgroundBookings,
+  cancelUserBookingByOwner,
+  countCampgroundBookings,
 } from "../controllers/booking.controller.js";
 
 import {
@@ -43,6 +45,8 @@ router.get(
   catchAsync(getCampgoundBookingsBlockedByOwner),
 );
 
+router.get("/owner/stats", protect, catchAsync(countCampgroundBookings));
+
 router.post(
   "/campgrounds/:campgroundId",
   protect,
@@ -62,6 +66,12 @@ router.get("/:bookingId", protect, catchAsync(getBooking));
 router.patch("/:bookingId/pay", protect, catchAsync(payForBooking));
 
 router.patch("/:bookingId/cancel", protect, catchAsync(cancelUserBooking));
+
+router.patch(
+  "/owner/:bookingId/cancel",
+  protect,
+  catchAsync(cancelUserBookingByOwner),
+);
 
 router.delete("/owner/:bookingId", protect, catchAsync(cancelOwnerBooking));
 
