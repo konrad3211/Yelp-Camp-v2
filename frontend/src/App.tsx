@@ -76,12 +76,28 @@ const App = () => {
     if (!accessToken) return;
     const handleNewMessagesNotification = (newMessage: Message) => {
       const openedConversationPath = `/conversations/${newMessage.conversation}`;
+      const conversationsPath = "/conversations";
 
-      if (location.pathname === openedConversationPath) return;
+      if (location.pathname === openedConversationPath || conversationsPath)
+        return;
 
-      toast.info(`New message from  ${newMessage.sender.username}`, {
-        description: newMessage.text,
-      });
+      toast.custom(() => (
+        <div className="flex w-90 items-start gap-3 rounded-xl border border-zinc-800 bg-zinc-900 p-4 shadow-2xl">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zinc-700 text-sm font-semibold text-white">
+            {newMessage.sender.username[0].toUpperCase()}
+          </div>
+
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-white">
+              {newMessage.sender.username}
+            </p>
+
+            <p className="mt-1 truncate text-sm text-zinc-300">
+              {newMessage.text}
+            </p>
+          </div>
+        </div>
+      ));
     };
     socket.on("newMessage", handleNewMessagesNotification);
 

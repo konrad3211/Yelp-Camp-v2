@@ -16,12 +16,18 @@ import { useEffect, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 
+type BookingStats = {
+  _id: string;
+  bookingsCount: number;
+  revenue: number;
+};
+
 const UserCampgroundsPage = () => {
   const { userId } = useParams<{ userId: string }>();
 
   const currentUser = useAuthStore((state) => state.user);
   const [campgrounds, setCampgrounds] = useState<Campground[]>([]);
-  const [bookingStats, setBookingStats] = useState([]);
+  const [bookingStats, setBookingStats] = useState<BookingStats[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -231,7 +237,7 @@ const UserCampgroundsPage = () => {
                       <div className="mt-5 grid grid-cols-2 gap-3">
                         <div className="rounded-xl border bg-muted/20 p-3">
                           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                            Total bookings
+                            Confirmed bookings
                           </p>
 
                           <p className="mt-1 text-xl font-semibold">

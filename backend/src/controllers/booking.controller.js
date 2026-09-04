@@ -133,9 +133,9 @@ export const blockCampgroundDates = async (req, res) => {
     user: userId,
     checkIn: start,
     checkOut: end,
-    numberOfNights: 1,
-    pricePerNight: 1,
-    totalPrice: 1,
+    numberOfNights: 0,
+    pricePerNight: 0,
+    totalPrice: 0,
     type: "owner_block",
     status: "confirmed",
     paymentStatus: "unpaid",
@@ -281,7 +281,10 @@ export const getCampgroundBookings = async (req, res) => {
 
   const bookings = await Booking.find({
     campground: campground._id,
-    status: { $in: ["confirmed", "pending"] },
+    type: "booking",
+    status: {
+      $in: ["confirmed", "pending"],
+    },
   }).populate("user");
 
   res.status(200).json({

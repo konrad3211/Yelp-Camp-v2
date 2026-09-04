@@ -23,7 +23,7 @@ const BookingSchema = new mongoose.Schema(
     numberOfNights: {
       type: Number,
       required: true,
-      min: 1,
+      min: 0,
     },
     pricePerNight: {
       type: Number,

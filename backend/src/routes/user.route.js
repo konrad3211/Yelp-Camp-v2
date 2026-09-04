@@ -39,6 +39,5 @@ router.patch(
   catchAsync(updateUserAvatar),
 );
 router.delete("/me", protect, catchAsync(deleteUser));
-// router.get("/:id", catchAsync(getUser));
 
 export default router;

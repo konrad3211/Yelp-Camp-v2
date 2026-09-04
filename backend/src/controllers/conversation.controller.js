@@ -1,3 +1,4 @@
+import { Booking } from "../models/booking.model.js";
 import { Campground } from "../models/campground.model.js";
 import { Conversation } from "../models/conversation.model.js";
 import { Message } from "../models/message.model.js";
@@ -45,6 +46,17 @@ export const startConversation = async (req, res) => {
   await conversation.save();
 
   await message.populate("sender", "username fullName imageUrl");
+  await conversation.populate({
+    path: "campground",
+    select: "title images.url",
+  });
+
+  const io = req.app.get("io");
+
+  io.to(`user:${ownerId.toString()}`).emit("newConversation", {
+    conversation,
+    message,
+  });
 
   res.status(201).json({
     success: true,
@@ -71,6 +83,16 @@ export const startConvesartionWithGuest = async (req, res) => {
 
   if (!ownerId.equals(ownerIdfromValidation)) {
     throw new AppError("You are not the owner", 400);
+  }
+
+  const booking = await Booking.exists({
+    campground: campgroundId,
+    user: guestId,
+    type: "booking",
+  });
+
+  if (!booking) {
+    throw new AppError("This user has no booking for this campground", 403);
   }
 
   let conversation = await Conversation.findOne({
@@ -145,8 +167,6 @@ export const createMessage = async (req, res) => {
   conversation.lastMessage = message._id;
   await conversation.save();
 
-  // Message.create() zwraca dokument Mongoose, dlatego możemy użyć populate().
-  // Populate zamienia ObjectId z pola sender na dane użytkownika.
   await message.populate("sender", "username fullName imageUrl");
 
   const recipientId = conversation.participants.find(

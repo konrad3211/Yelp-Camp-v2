@@ -1,5 +1,6 @@
 import { io, type Socket } from "socket.io-client";
 import type { Message } from "../types/message";
+import type { Conversation } from "@/types/conversation";
 
 type MessagesReadPayload = {
   conversationId: string;
@@ -9,6 +10,10 @@ type MessagesReadPayload = {
 type ServerToClientEvents = {
   newMessage: (message: Message) => void;
   messagesRead: (payload: MessagesReadPayload) => void;
+  newConversation: (data: {
+    conversation: Conversation;
+    message: Message;
+  }) => void;
 };
 
 //tutaj mowimy, ze nie bedziemy emitowac zadnych eventow z klienta

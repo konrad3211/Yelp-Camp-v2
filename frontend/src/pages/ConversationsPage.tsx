@@ -20,11 +20,11 @@ const ConversationsPage = () => {
   const currentUser = useAuthStore((state) => state.user);
 
   const getLastMessageLabel = (conversation: Conversation) => {
-    const sender = conversation.lastMessage?.sender;
+    const sender = conversation?.lastMessage?.sender;
     if (!sender) return;
 
-    const isCurrentUser = sender._id === currentUser._id;
-    const isOwner = sender._id === conversation.campground.author._id;
+    const isCurrentUser = sender?._id === currentUser._id;
+    const isOwner = sender?._id === conversation?.campground?.author?._id;
 
     if (isCurrentUser) {
       return "You: ";
@@ -55,6 +55,32 @@ const ConversationsPage = () => {
     };
 
     fetchConversations();
+  }, []);
+
+  useEffect(() => {
+    const handleNewConversation = async ({
+      conversation,
+      message,
+    }: {
+      conversation: Conversation;
+      message: Message;
+    }) => {
+      console.log("con", conversation);
+      console.log("msg", message);
+      setConversations((prevConversations) => [
+        {
+          ...conversation,
+          lastMessage: message,
+          unreadCount: (conversation.unreadCount ?? 0) + 1,
+        },
+        ...prevConversations,
+      ]);
+    };
+
+    socket.on("newConversation", handleNewConversation);
+    return () => {
+      socket.off("newConversation", handleNewConversation);
+    };
   }, []);
 
   useEffect(() => {

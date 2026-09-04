@@ -27,3 +27,7 @@ export const updateProfileImage = async (data: UpdateUserImageFormData) => {
   const response = await api.patch("/users/me/avatar", formData);
   return response.data;
 };
+
+export const deleteUser = async () => {
+  await api.delete("/users/me");
+};
