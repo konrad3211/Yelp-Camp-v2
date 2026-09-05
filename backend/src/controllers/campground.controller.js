@@ -66,10 +66,7 @@ export const getCampgrounds = async (req, res) => {
     .populate("author", "fullName username imageUrl")
     .populate({
       path: "reviews",
-      populate: {
-        path: "author",
-        select: "fullName username imageUrl",
-      },
+      select: "rating",
     });
   res.status(200).json({
     success: true,

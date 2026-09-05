@@ -63,10 +63,11 @@ const HomePage = () => {
         checkOut: "",
       });
 
-      const location = document.querySelector<HTMLInputElement>("#location");
+      const locationInput =
+        document.querySelector<HTMLInputElement>("#location");
 
-      if (location) {
-        location.value = "";
+      if (locationInput) {
+        locationInput.value = "";
       }
 
       const checkIn = document.querySelector<HTMLInputElement>("#checkIn");
@@ -239,7 +240,6 @@ const HomePage = () => {
                 className="min-h-14 rounded-xl px-7 md:min-h-18"
               >
                 <Search className="size-5" />
-
                 {isSearching ? "Searching..." : "Search"}
               </Button>
             </div>
@@ -274,14 +274,8 @@ const HomePage = () => {
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {campgrounds.map((campground) => {
               const mainImage = campground.images[0];
-
-              const averageRating =
-                campground.reviews?.length > 0
-                  ? campground.reviews.reduce(
-                      (sum, review) => sum + review.rating,
-                      0,
-                    ) / campground.reviews.length
-                  : 0;
+              const averageRating = campground.averageRating ?? 0;
+              const reviewsCount = campground.reviews?.length ?? 0;
 
               return (
                 <Card
@@ -323,12 +317,12 @@ const HomePage = () => {
                         ))}
                       </div>
 
-                      {campground.reviews?.length > 0 ? (
+                      {reviewsCount > 0 ? (
                         <span className="text-sm font-medium">
                           {averageRating.toFixed(1)}
 
                           <span className="ml-1 font-normal text-muted-foreground">
-                            ({campground.reviews.length})
+                            ({reviewsCount})
                           </span>
                         </span>
                       ) : (
