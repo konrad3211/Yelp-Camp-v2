@@ -78,7 +78,10 @@ const App = () => {
       const openedConversationPath = `/conversations/${newMessage.conversation}`;
       const conversationsPath = "/conversations";
 
-      if (location.pathname === openedConversationPath || conversationsPath)
+      if (
+        location.pathname === openedConversationPath ||
+        location.pathname === conversationsPath
+      )
         return;
 
       toast.custom(() => (

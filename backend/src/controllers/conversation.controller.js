@@ -121,6 +121,31 @@ export const startConvesartionWithGuest = async (req, res) => {
 
   await message.populate("sender", "username fullName imageUrl");
 
+  await conversation.populate([
+    {
+      path: "campground",
+      select: "title images.url author",
+      populate: {
+        path: "author",
+        select: "_id",
+      },
+    },
+    {
+      path: "lastMessage",
+      populate: {
+        path: "sender",
+        select: "_id",
+      },
+    },
+  ]);
+
+  const io = req.app.get("io");
+
+  io.to(`user:${guestId.toString()}`).emit("newConversation", {
+    conversation,
+    message,
+  });
+
   res.status(201).json({
     success: true,
     message: "Conversation started successfully",
