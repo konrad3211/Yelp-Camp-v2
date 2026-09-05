@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type SubmitEventHandler } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { CalendarDays, MapPin, Search } from "lucide-react";
+import { CalendarDays, MapPin, Search, Star } from "lucide-react";
 import { toast } from "sonner";
 
 import { getCampgrounds } from "@/api/campground.api";
@@ -62,12 +62,15 @@ const HomePage = () => {
         checkIn: "",
         checkOut: "",
       });
+
       const location = document.querySelector<HTMLInputElement>("#location");
+
       if (location) {
         location.value = "";
       }
 
       const checkIn = document.querySelector<HTMLInputElement>("#checkIn");
+
       if (checkIn) {
         checkIn.value = "";
       }
@@ -93,7 +96,7 @@ const HomePage = () => {
         const data = await getCampgrounds(searchParams);
 
         setCampgrounds(data.data);
-      } catch (error) {
+      } catch (error: any) {
         console.error("Failed to fetch campgrounds:", error);
 
         setError("Failed to fetch campgrounds");
@@ -158,7 +161,6 @@ const HomePage = () => {
             className="rounded-2xl border bg-background p-2 shadow-lg"
           >
             <div className="grid gap-1 md:grid-cols-[1.4fr_1fr_1fr_auto]">
-              {/* LOCATION */}
               <div className="flex min-h-18 items-center gap-3 rounded-xl px-4 transition hover:bg-muted/40">
                 <MapPin className="size-6 shrink-0 text-muted-foreground" />
 
@@ -180,7 +182,6 @@ const HomePage = () => {
                 </div>
               </div>
 
-              {/* CHECK IN */}
               <div
                 onClick={() => checkInRef.current?.showPicker()}
                 className="flex min-h-18 cursor-pointer items-center gap-3 rounded-xl border-t px-4 transition hover:bg-muted/40 md:border-l md:border-t-0"
@@ -207,7 +208,6 @@ const HomePage = () => {
                 </div>
               </div>
 
-              {/* CHECK OUT */}
               <div
                 onClick={() => checkOutRef.current?.showPicker()}
                 className="flex min-h-18 cursor-pointer items-center gap-3 rounded-xl border-t px-4 transition hover:bg-muted/40 md:border-l md:border-t-0"
@@ -233,7 +233,6 @@ const HomePage = () => {
                 </div>
               </div>
 
-              {/* SEARCH */}
               <Button
                 type="submit"
                 disabled={isSearching}
@@ -276,6 +275,14 @@ const HomePage = () => {
             {campgrounds.map((campground) => {
               const mainImage = campground.images[0];
 
+              const averageRating =
+                campground.reviews?.length > 0
+                  ? campground.reviews.reduce(
+                      (sum, review) => sum + review.rating,
+                      0,
+                    ) / campground.reviews.length
+                  : 0;
+
               return (
                 <Card
                   key={campground._id}
@@ -301,6 +308,35 @@ const HomePage = () => {
                     <p className="text-sm text-muted-foreground">
                       {campground.location}
                     </p>
+
+                    <div className="mt-2 flex items-center gap-2">
+                      <div className="flex items-center gap-0.5">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            className={`size-4 ${
+                              star <= Math.round(averageRating)
+                                ? "fill-yellow-400 text-yellow-400"
+                                : "text-muted-foreground/30"
+                            }`}
+                          />
+                        ))}
+                      </div>
+
+                      {campground.reviews?.length > 0 ? (
+                        <span className="text-sm font-medium">
+                          {averageRating.toFixed(1)}
+
+                          <span className="ml-1 font-normal text-muted-foreground">
+                            ({campground.reviews.length})
+                          </span>
+                        </span>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">
+                          No reviews
+                        </span>
+                      )}
+                    </div>
                   </CardHeader>
 
                   <CardContent className="flex-1">
