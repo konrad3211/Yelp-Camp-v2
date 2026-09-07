@@ -56,6 +56,10 @@ export type GetCampgroundsResponse = {
   success: boolean;
   message: string;
   data: Campground[];
+  page: number;
+  limit: number;
+  totalCampgrounds: number;
+  totalPages: number;
 };
 export type GetCampgroundResponse = {
   success: boolean;

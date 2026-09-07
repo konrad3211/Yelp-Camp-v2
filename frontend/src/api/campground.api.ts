@@ -13,6 +13,8 @@ type GetCampgroundParams = {
   location?: string;
   checkIn?: string;
   checkOut?: string;
+  page?: number;
+  limit?: number;
 };
 
 export const getCampgrounds = async (params?: GetCampgroundParams) => {

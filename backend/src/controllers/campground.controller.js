@@ -13,6 +13,12 @@ const MAX_CAMPGROUND_IMAGES = 8;
 
 export const getCampgrounds = async (req, res) => {
   const { location, checkIn, checkOut } = req.query;
+
+  const page = Math.max(Number(req.query.page) || 1, 1);
+  const limit = Math.min(Math.max(Number(req.query.limit) || 12, 1), 50);
+
+  const skip = (page - 1) * limit;
+
   const filter = {};
   if (location) {
     filter.location = {
@@ -67,11 +73,21 @@ export const getCampgrounds = async (req, res) => {
     .populate({
       path: "reviews",
       select: "rating",
-    });
+    })
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
+
+  const totalCampgrounds = await Campground.countDocuments(filter);
+
   res.status(200).json({
     success: true,
     message: "Campgrounds have been fetched successfully",
     data: campgrounds,
+    page,
+    limit,
+    totalCampgrounds,
+    totalPages: Math.ceil(totalCampgrounds / limit),
   });
 };
 

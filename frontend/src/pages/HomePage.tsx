@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState, type SubmitEventHandler } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import {
+  Link,
+  useLocation,
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
 import { CalendarDays, MapPin, Search, Star } from "lucide-react";
 import { toast } from "sonner";
 
@@ -18,15 +23,22 @@ import { Button } from "@/components/ui/button";
 import PageLoader from "@/components/PageLoader";
 
 const HomePage = () => {
+  const [urlSearchParams, setUrlSearchParams] = useSearchParams();
   const [campgrounds, setCampgrounds] = useState<Campground[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState("");
 
-  const [searchParams, setSearchParams] = useState({
-    location: "",
-    checkIn: "",
-    checkOut: "",
+  const [totalPages, setTotalPages] = useState(1);
+
+  const pages = Array.from({ length: totalPages }, (_, index) => index + 1);
+
+  const page = Math.max(Number(urlSearchParams.get("page")) || 1, 1);
+
+  const [filters, setFilters] = useState({
+    location: urlSearchParams.get("location") || "",
+    checkIn: urlSearchParams.get("checkIn") || "",
+    checkOut: urlSearchParams.get("checkOut") || "",
   });
 
   const [checkInDate, setCheckInDate] = useState("");
@@ -57,7 +69,7 @@ const HomePage = () => {
     }
 
     if (state?.action === "refresh") {
-      setSearchParams({
+      setFilters({
         location: "",
         checkIn: "",
         checkOut: "",
@@ -94,10 +106,17 @@ const HomePage = () => {
       try {
         setError("");
 
-        const data = await getCampgrounds(searchParams);
+        const data = await getCampgrounds({
+          location: filters.location,
+          checkIn: filters.checkIn,
+          checkOut: filters.checkOut,
+          page,
+          limit: 12,
+        });
 
         setCampgrounds(data.data);
-      } catch (error: any) {
+        setTotalPages(data.totalPages);
+      } catch (error) {
         console.error("Failed to fetch campgrounds:", error);
 
         setError("Failed to fetch campgrounds");
@@ -112,7 +131,7 @@ const HomePage = () => {
     };
 
     fetchCampgrounds();
-  }, [searchParams]);
+  }, [filters.location, filters.checkIn, filters.checkOut, page]);
 
   const handleSearch: SubmitEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();
@@ -123,9 +142,32 @@ const HomePage = () => {
     const checkIn = formData.get("checkIn");
     const checkOut = formData.get("checkOut");
 
+    setUrlSearchParams((prev) => {
+      if (location) {
+        prev.set("location", location.toString());
+      } else {
+        prev.delete("location");
+      }
+
+      if (checkIn) {
+        prev.set("checkIn", checkIn.toString());
+      } else {
+        prev.delete("checkIn");
+      }
+
+      if (checkOut) {
+        prev.set("checkOut", checkOut.toString());
+      } else {
+        prev.delete("checkOut");
+      }
+      prev.set("page", "1");
+
+      return prev;
+    });
+
     setIsSearching(true);
 
-    setSearchParams({
+    setFilters({
       location: location?.toString() ?? "",
       checkIn: checkIn?.toString() ?? "",
       checkOut: checkOut?.toString() ?? "",
@@ -175,6 +217,7 @@ const HomePage = () => {
 
                   <input
                     id="location"
+                    defaultValue={filters.location}
                     name="location"
                     type="text"
                     placeholder="Where do you want to go?"
@@ -200,6 +243,7 @@ const HomePage = () => {
                   <input
                     ref={checkInRef}
                     id="checkIn"
+                    defaultValue={filters.checkIn}
                     name="checkIn"
                     type="date"
                     min={todayFormatted}
@@ -226,6 +270,7 @@ const HomePage = () => {
                   <input
                     ref={checkOutRef}
                     id="checkOut"
+                    defaultValue={filters.checkOut}
                     name="checkOut"
                     type="date"
                     min={checkInDate || todayFormatted}
@@ -372,6 +417,21 @@ const HomePage = () => {
             })}
           </div>
         )}
+        <div className="flex space-x-2 justify-center mt-5">
+          {pages.map((pageNumber) => (
+            <Button
+              key={pageNumber}
+              onClick={() => {
+                setUrlSearchParams((prev) => {
+                  prev.set("page", pageNumber.toString());
+                  return prev;
+                });
+              }}
+            >
+              {pageNumber}
+            </Button>
+          ))}
+        </div>
       </div>
     </section>
   );
