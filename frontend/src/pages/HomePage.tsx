@@ -417,10 +417,25 @@ const HomePage = () => {
             })}
           </div>
         )}
-        <div className="flex space-x-2 justify-center mt-5">
+        <div className="mt-8 flex items-center justify-center gap-2">
+          <Button
+            variant="outline"
+            disabled={page === 1}
+            onClick={() => {
+              setUrlSearchParams((prev) => {
+                prev.set("page", (page - 1).toString());
+                return prev;
+              });
+            }}
+          >
+            Previous
+          </Button>
+
           {pages.map((pageNumber) => (
             <Button
               key={pageNumber}
+              variant={page === pageNumber ? "default" : "outline"}
+              size="icon"
               onClick={() => {
                 setUrlSearchParams((prev) => {
                   prev.set("page", pageNumber.toString());
@@ -431,6 +446,19 @@ const HomePage = () => {
               {pageNumber}
             </Button>
           ))}
+
+          <Button
+            variant="outline"
+            disabled={page === totalPages}
+            onClick={() => {
+              setUrlSearchParams((prev) => {
+                prev.set("page", (page + 1).toString());
+                return prev;
+              });
+            }}
+          >
+            Next
+          </Button>
         </div>
       </div>
     </section>

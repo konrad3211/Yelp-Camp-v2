@@ -11,9 +11,9 @@ import {
 } from "@/components/ui/card";
 import { useAuthStore } from "@/store/auth.store";
 import type { Campground } from "@/types/campground";
-import { MapPin, Plus, TentTree } from "lucide-react";
+import { ArrowLeft, MapPin, Plus, TentTree } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link, Navigate, useParams } from "react-router-dom";
+import { Link, Navigate, useLocation, useParams } from "react-router-dom";
 import { toast } from "sonner";
 
 type BookingStats = {
@@ -24,6 +24,13 @@ type BookingStats = {
 
 const UserCampgroundsPage = () => {
   const { userId } = useParams<{ userId: string }>();
+
+  const location = useLocation();
+
+  const locationState = location.state as {
+    action?: "userCampgrounds";
+    from?: string;
+  };
 
   const currentUser = useAuthStore((state) => state.user);
   const [campgrounds, setCampgrounds] = useState<Campground[]>([]);
@@ -146,10 +153,23 @@ const UserCampgroundsPage = () => {
   }
   return (
     <section className="mx-auto max-w-6xl space-y-8 px-4 py-10">
+      {locationState?.from && (
+        <Button
+          variant="outline"
+          nativeButton={false}
+          className="w-fit gap-2 rounded-full"
+          render={<Link to={locationState.from} />}
+        >
+          <ArrowLeft className="size-4" />
+          Back
+        </Button>
+      )}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            {currentUser._id === userId ? "My campgrounds" : "User campgrounds"}
+            {currentUser._id === userId
+              ? "My campgrounds"
+              : `${campgrounds[0]?.author.username}${campgrounds[0]?.author.username.endsWith("s") ? "'" : "'s"} campgrounds`}
           </h1>
 
           <p className="mt-2 text-muted-foreground">
@@ -268,7 +288,12 @@ const UserCampgroundsPage = () => {
                       <Button
                         variant="outline"
                         nativeButton={false}
-                        render={<Link to={`/campgrounds/${campground._id}`} />}
+                        render={
+                          <Link
+                            to={`/campgrounds/${campground._id}`}
+                            state={{ from: location.pathname }}
+                          />
+                        }
                       >
                         View campground
                       </Button>

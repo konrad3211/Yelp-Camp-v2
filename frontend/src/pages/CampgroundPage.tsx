@@ -533,7 +533,19 @@ const CampgroundPage = () => {
   return (
     <section className="mx-auto max-w-7xl space-y-8 px-4 py-6">
       {" "}
-      <Button nativeButton={false} variant="ghost" render={<Link to="/" />}>
+      <Button
+        nativeButton={false}
+        variant="ghost"
+        className="w-fit gap-2 px-2 text-muted-foreground hover:text-foreground"
+        render={
+          location?.state?.from ? (
+            <Link to={location.state.from} />
+          ) : (
+            <Link to="/" />
+          )
+        }
+      >
+        <ChevronLeft className="size-4" />
         Back to campgrounds
       </Button>
       {userClosestBookingDate.checkIn && userClosestBookingDate.checkOut && (
@@ -1036,13 +1048,18 @@ const CampgroundPage = () => {
                   <AvatarFallback>{authorInitials}</AvatarFallback>
                 </Avatar>
 
-                <div>
-                  <p className="font-medium">{campground.author.fullName}</p>
+                <Link
+                  to={`/campgrounds/user/${campground.author._id}`}
+                  state={{ action: "userCampgrounds", from: location.pathname }}
+                >
+                  <div>
+                    <p className="font-medium">{campground.author.fullName}</p>
 
-                  <p className="text-sm text-muted-foreground">
-                    @{campground.author.username}
-                  </p>
-                </div>
+                    <p className="text-sm text-muted-foreground">
+                      @{campground.author.username}
+                    </p>
+                  </div>
+                </Link>
               </div>
 
               {currentUser?._id !== campground.author._id && (
