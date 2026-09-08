@@ -83,8 +83,18 @@ export const updateCampgroundImages = async (
   return response.data;
 };
 
-export const getUserCampgrounds = async (userId: string) => {
-  const response = await publicApi.get(`/campgrounds/user/${userId}`);
+type getUserCampgroundsParams = {
+  page?: number;
+  limit?: number;
+};
+
+export const getUserCampgrounds = async (
+  userId: string,
+  params?: getUserCampgroundsParams,
+) => {
+  const response = await publicApi.get(`/campgrounds/user/${userId}`, {
+    params,
+  });
   return response.data;
 };
 

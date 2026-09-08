@@ -13,7 +13,13 @@ import { useAuthStore } from "@/store/auth.store";
 import type { Campground } from "@/types/campground";
 import { ArrowLeft, MapPin, Plus, TentTree } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link, Navigate, useLocation, useParams } from "react-router-dom";
+import {
+  Link,
+  Navigate,
+  useLocation,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 import { toast } from "sonner";
 
 type BookingStats = {
@@ -24,6 +30,7 @@ type BookingStats = {
 
 const UserCampgroundsPage = () => {
   const { userId } = useParams<{ userId: string }>();
+  const [urlSearchParams, setUrlSearchParams] = useSearchParams();
 
   const location = useLocation();
 
@@ -38,13 +45,23 @@ const UserCampgroundsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const [totalPages, setTotalPages] = useState(1);
+  const pages = Array.from({ length: totalPages }, (_, index) => index + 1);
+  const page = Math.max(Number(urlSearchParams.get("page")) || 1, 1);
+
+  const params = {
+    page,
+    limit: 10,
+  };
+
   useEffect(() => {
     if (!currentUser || !userId) return;
     const fetchCampgrounds = async () => {
       try {
         setError("");
-        const data = await getUserCampgrounds(userId);
+        const data = await getUserCampgrounds(userId, params);
         setCampgrounds(data.data);
+        setTotalPages(data.totalPages);
       } catch (error) {
         console.error("Failed to fetch user campgrounds", error);
         setError("Failed to fetch user campgrounds");
@@ -54,7 +71,7 @@ const UserCampgroundsPage = () => {
       }
     };
     fetchCampgrounds();
-  }, [currentUser, userId]);
+  }, [currentUser, userId, params.page, params.limit]);
 
   useEffect(() => {
     const fetchBookingsCount = async () => {
@@ -155,9 +172,9 @@ const UserCampgroundsPage = () => {
     <section className="mx-auto max-w-6xl space-y-8 px-4 py-10">
       {locationState?.from && (
         <Button
-          variant="outline"
+          variant="ghost"
           nativeButton={false}
-          className="w-fit gap-2 rounded-full"
+          className="w-fit gap-2 px-2 text-muted-foreground hover:text-foreground"
           render={<Link to={locationState.from} />}
         >
           <ArrowLeft className="size-4" />
@@ -334,6 +351,49 @@ const UserCampgroundsPage = () => {
             </Card>
           );
         })}
+        <div className="mt-8 flex items-center justify-center gap-2">
+          <Button
+            variant="outline"
+            disabled={page <= 1}
+            onClick={() => {
+              setUrlSearchParams((prev) => {
+                prev.set("page", (page - 1).toString());
+                return prev;
+              });
+            }}
+          >
+            Previous
+          </Button>
+
+          {pages.map((pageNumber) => (
+            <Button
+              key={pageNumber}
+              variant={page === pageNumber ? "default" : "outline"}
+              size="icon"
+              onClick={() => {
+                setUrlSearchParams((prev) => {
+                  prev.set("page", pageNumber.toString());
+                  return prev;
+                });
+              }}
+            >
+              {pageNumber}
+            </Button>
+          ))}
+
+          <Button
+            variant="outline"
+            disabled={page >= totalPages}
+            onClick={() => {
+              setUrlSearchParams((prev) => {
+                prev.set("page", (page + 1).toString());
+                return prev;
+              });
+            }}
+          >
+            Next
+          </Button>
+        </div>
       </div>
     </section>
   );
