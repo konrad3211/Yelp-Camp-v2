@@ -243,12 +243,25 @@ export const getUserBooking = async (req, res) => {
 };
 
 export const getUserBookings = async (req, res) => {
+  const { status } = req.query;
   const userId = req.user._id;
 
-  const userBookings = await Booking.find({
+  const page = Math.max(Number(req.query.page) || 1, 1);
+  const limit = Math.min(Math.max(Number(req.query.limit) || 10, 1), 50);
+  const skip = (page - 1) * limit;
+
+  const filter = {
     user: userId,
     type: "booking",
-  })
+  };
+  if (status) {
+    filter.status = {
+      $regex: status,
+      $options: "i",
+    };
+  }
+
+  const userBookings = await Booking.find(filter)
     .populate({
       path: "campground",
       populate: {
@@ -256,13 +269,31 @@ export const getUserBookings = async (req, res) => {
         select: "username fullName imageUrl",
       },
     })
+    .skip(skip)
+    .limit(limit)
     .sort({
       checkIn: 1,
     });
 
+  const userBookingsStatuses = await Booking.find({
+    user: userId,
+    type: "booking",
+  }).select("status -_id");
+
+  const statuses = [
+    ...new Set(userBookingsStatuses.map((booking) => booking.status)),
+  ];
+
+  const totalBookings = await Booking.countDocuments(filter);
+
   res.status(200).json({
     success: true,
     data: userBookings,
+    totalBookings,
+    totalPages: Math.ceil(totalBookings / limit),
+    page,
+    limit,
+    statuses,
   });
 };
 

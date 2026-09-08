@@ -22,29 +22,37 @@ import {
 import { useAuthStore } from "@/store/auth.store";
 import type { Booking } from "@/types/booking";
 import { useEffect, useState } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { CalendarDays, Eye } from "lucide-react";
 
 const BookingsPage = () => {
   const currentUser = useAuthStore((state) => state.user);
 
   const [bookings, setBookings] = useState<Booking[]>([]);
-  const [filter, setFilter] = useState<
-    "all" | "confirmed" | "pending" | "cancelled"
-  >("all");
+  const [filter, setFilter] = useState([]);
   const [fetchBookingsError, setFetchBookingsError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [urlSearchParams, setUrlSearchParams] = useSearchParams();
+  const [totalPages, setTotalPages] = useState(1);
+  const page = Math.max(Number(urlSearchParams.get("page")) || 1, 1);
+  const pages = Array.from({ length: totalPages }, (_, index) => index + 1);
+  const status = urlSearchParams.get("status");
+
+  const params = {
+    page,
+    status,
+    limit: 10,
+  };
 
   useEffect(() => {
     const fetchBookings = async () => {
       try {
         setFetchBookingsError("");
 
-        const data = await getUserBookings();
-
-        console.log(data.data);
-
+        const data = await getUserBookings(params);
+        setTotalPages(data.totalPages);
         setBookings(data.data);
+        setFilter(data.statuses);
       } catch (error) {
         console.error("Failed to fetch user bookings:", error);
 
@@ -55,7 +63,7 @@ const BookingsPage = () => {
     };
 
     fetchBookings();
-  }, []);
+  }, [params.page, params.limit, params.status]);
 
   const handleCancelBooking = async (bookingId: string) => {
     try {
@@ -78,15 +86,7 @@ const BookingsPage = () => {
     }
   };
 
-  const filteredBookings = bookings.filter((booking) => {
-    if (filter === "all") {
-      return true;
-    }
-
-    return booking.status === filter;
-  });
-
-  const statuses = new Set(bookings.map((booking) => booking.status));
+  const statuses = new Set(filter);
 
   if (isLoading) {
     return <PageLoader />;
@@ -136,17 +136,38 @@ const BookingsPage = () => {
 
       <div className="flex flex-wrap gap-2 rounded-xl border bg-muted/20 p-2">
         <Button
-          variant={filter === "all" ? "default" : "ghost"}
-          onClick={() => setFilter("all")}
+          variant={
+            ["confirmed", "cancelled", "pending"].includes(
+              urlSearchParams.get("status"),
+            )
+              ? "ghost"
+              : "default"
+          }
+          onClick={() =>
+            setUrlSearchParams((prev) => {
+              prev.delete("status");
+              prev.delete("page");
+              return prev;
+            })
+          }
           className="rounded-lg"
         >
           All
         </Button>
-
         {statuses.has("confirmed") && (
           <Button
-            variant={filter === "confirmed" ? "default" : "ghost"}
-            onClick={() => setFilter("confirmed")}
+            variant={
+              urlSearchParams.get("status") === "confirmed"
+                ? "default"
+                : "ghost"
+            }
+            onClick={() =>
+              setUrlSearchParams((prev) => {
+                prev.set("status", "confirmed");
+                prev.delete("page");
+                return prev;
+              })
+            }
             className="rounded-lg"
           >
             Confirmed
@@ -155,8 +176,16 @@ const BookingsPage = () => {
 
         {statuses.has("pending") && (
           <Button
-            variant={filter === "pending" ? "default" : "ghost"}
-            onClick={() => setFilter("pending")}
+            variant={
+              urlSearchParams.get("status") === "pending" ? "default" : "ghost"
+            }
+            onClick={() =>
+              setUrlSearchParams((prev) => {
+                prev.set("status", "pending");
+                prev.delete("page");
+                return prev;
+              })
+            }
             className="rounded-lg"
           >
             Pending
@@ -165,8 +194,19 @@ const BookingsPage = () => {
 
         {statuses.has("cancelled") && (
           <Button
-            variant={filter === "cancelled" ? "default" : "ghost"}
-            onClick={() => setFilter("cancelled")}
+            variant={
+              urlSearchParams.get("status") === "cancelled"
+                ? "default"
+                : "ghost"
+            }
+            onClick={() =>
+              setUrlSearchParams((prev) => {
+                prev.set("status", "cancelled");
+                prev.delete("page");
+
+                return prev;
+              })
+            }
             className="rounded-lg"
           >
             Cancelled
@@ -174,7 +214,7 @@ const BookingsPage = () => {
         )}
       </div>
 
-      {filteredBookings.length === 0 ? (
+      {bookings.length === 0 ? (
         <div className="rounded-2xl border bg-muted/20 px-6 py-16 text-center">
           <p className="font-semibold">
             You do not have any bookings with this status
@@ -186,7 +226,7 @@ const BookingsPage = () => {
         </div>
       ) : (
         <div className="grid gap-6 lg:grid-cols-2">
-          {filteredBookings.map((booking) => {
+          {bookings.map((booking) => {
             const checkIn = new Date(booking.checkIn);
             const checkOut = new Date(booking.checkOut);
 
@@ -397,6 +437,50 @@ const BookingsPage = () => {
           })}
         </div>
       )}
+      <div className="mt-8 flex items-center justify-center gap-2">
+        <Button
+          variant="outline"
+          disabled={page <= 1}
+          onClick={() => {
+            setUrlSearchParams((prev) => {
+              prev.set("page", (page - 1).toString());
+              return prev;
+            });
+          }}
+        >
+          Previous
+        </Button>
+
+        {pages.map((pageNumber) => (
+          <Button
+            key={pageNumber}
+            variant={page === pageNumber ? "default" : "outline"}
+            size="icon"
+            onClick={() => {
+              setUrlSearchParams((prev) => {
+                prev.set("page", pageNumber.toString());
+
+                return prev;
+              });
+            }}
+          >
+            {pageNumber}
+          </Button>
+        ))}
+
+        <Button
+          variant="outline"
+          disabled={page >= totalPages}
+          onClick={() => {
+            setUrlSearchParams((prev) => {
+              prev.set("page", (page + 1).toString());
+              return prev;
+            });
+          }}
+        >
+          Next
+        </Button>
+      </div>
     </section>
   );
 };
