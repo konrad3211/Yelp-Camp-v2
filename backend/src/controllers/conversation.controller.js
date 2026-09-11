@@ -68,7 +68,7 @@ export const startConversation = async (req, res) => {
   });
 };
 
-export const startConvesartionWithGuest = async (req, res) => {
+export const startConversationWithGuest = async (req, res) => {
   const ownerIdfromValidation = req.user._id;
   const { guestId, campgroundId } = req.params;
   const { text } = req.body;
@@ -156,7 +156,7 @@ export const startConvesartionWithGuest = async (req, res) => {
   });
 };
 
-export const isThereConvesration = async (req, res) => {
+export const getExistingConversation = async (req, res) => {
   const userId = req.user._id;
   const { guestId, campgroundId } = req.params;
 

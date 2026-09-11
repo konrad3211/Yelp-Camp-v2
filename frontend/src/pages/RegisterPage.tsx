@@ -48,7 +48,7 @@ const RegisterPage = () => {
           </h1>
 
           <p className="mt-2 text-sm text-muted-foreground">
-            Join YelpCamp and start discovering great campgrounds.
+            Join Camply and start discovering great campgrounds.
           </p>
         </div>
 

@@ -99,7 +99,7 @@ const uploadSeedImages = async (campground, index) => {
       const imagePath = path.join(__dirname, "images", imageName);
 
       const result = await cloudinary.uploader.upload(imagePath, {
-        folder: `yelp-camp/seeds/campground-${index + 1}`,
+        folder: `camply/seeds/campground-${index + 1}`,
         public_id: `image-${imageIndex + 1}`,
         overwrite: true,
       });
@@ -130,7 +130,7 @@ const seedDatabase = async () => {
 
     console.log("Deleting old seed images from Cloudinary...");
 
-    await cloudinary.api.delete_resources_by_prefix("yelp-camp/seeds/");
+    await cloudinary.api.delete_resources_by_prefix("camply/seeds/");
 
     console.log("Deleting old campgrounds...");
 

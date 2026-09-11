@@ -22,6 +22,8 @@ import UserProfilePage from "./pages/UserProfilePage";
 import PageLoader from "./components/PageLoader";
 import UserCampgroundsPage from "./pages/UserCampgroundsPage";
 import CampgroundBookingsPage from "./pages/CampgroundBookingsPage";
+import ProtectedRoute from "./components/ProtectedRoute";
+import NotFoundPage from "./pages/NotFoundPage";
 
 const App = () => {
   const user = useAuthStore((state) => state.user);
@@ -35,7 +37,7 @@ const App = () => {
       try {
         await refreshAuth();
       } catch (error) {
-        console.log("User is not logged in:", error);
+        console.error("User is not logged in:", error);
       } finally {
         setIsAuthLoading(false);
       }
@@ -54,20 +56,7 @@ const App = () => {
 
     socket.connect();
 
-    const handleConnect = () => {
-      console.log("Socket connected:", socket.id);
-    };
-
-    const handleConnectError = (error: Error) => {
-      console.error("Socket connection failed:", error.message);
-    };
-
-    socket.on("connect", handleConnect);
-    socket.on("connect_error", handleConnectError);
-
     return () => {
-      socket.off("connect", handleConnect);
-      socket.off("connect_error", handleConnectError);
       socket.disconnect();
     };
   }, [accessToken]);
@@ -118,67 +107,38 @@ const App = () => {
     <Routes>
       <Route element={<AppLayout />}>
         <Route path="/" element={<HomePage />} />
+
         <Route path="/campgrounds/:id" element={<CampgroundPage />} />
+
         <Route
           path="/campgrounds/user/:userId"
           element={<UserCampgroundsPage />}
         />
-        <Route path="/campgrounds/new" element={<CreateCampgroundPage />} />
 
-        <Route
-          path="/bookings"
-          element={
-            user ? (
-              <BookingsPage />
-            ) : (
-              <Navigate
-                to="/login"
-                state={{ action: "fetchBookings", from: "/bookings" }}
-              />
-            )
-          }
-        />
+        <Route element={<ProtectedRoute />}>
+          <Route path="/campgrounds/new" element={<CreateCampgroundPage />} />
 
-        <Route
-          path="/campgrounds/:id/update"
-          element={<UpdateCampgroundPage />}
-        />
+          <Route path="/bookings" element={<BookingsPage />} />
 
-        <Route
-          path="/campgrounds/:campgroundId/bookings"
-          element={<CampgroundBookingsPage />}
-        />
+          <Route
+            path="/campgrounds/:id/update"
+            element={<UpdateCampgroundPage />}
+          />
 
-        <Route
-          path="/conversations"
-          element={
-            user ? (
-              <ConversationsPage />
-            ) : (
-              <Navigate
-                to="/login"
-                replace
-                state={{ action: "fetchConversations", from: "/conversations" }}
-              />
-            )
-          }
-        />
+          <Route
+            path="/campgrounds/:campgroundId/bookings"
+            element={<CampgroundBookingsPage />}
+          />
 
-        <Route path="/conversations/new" element={<NewConversationPage />} />
+          <Route path="/conversations" element={<ConversationsPage />} />
 
-        <Route
-          path="/conversations/:id"
-          element={
-            user ? <ConversationPage /> : <Navigate to="/login" replace />
-          }
-        />
+          <Route path="/conversations/new" element={<NewConversationPage />} />
 
-        <Route
-          path="/profile"
-          element={
-            user ? <UserProfilePage /> : <Navigate to="/login" replace />
-          }
-        />
+          <Route path="/conversations/:id" element={<ConversationPage />} />
+
+          <Route path="/profile" element={<UserProfilePage />} />
+        </Route>
+        <Route path="*" element={<NotFoundPage />} />
       </Route>
 
       <Route
@@ -191,15 +151,17 @@ const App = () => {
         element={user ? <Navigate to="/" replace /> : <RegisterPage />}
       />
 
-      <Route
-        path="/bookings/:bookingId/payment"
-        element={user ? <FakePaymentPage /> : <Navigate to="/login" replace />}
-      />
+      <Route element={<ProtectedRoute />}>
+        <Route
+          path="/bookings/:bookingId/payment"
+          element={<FakePaymentPage />}
+        />
 
-      <Route
-        path="/bookings/:bookingId/success"
-        element={<BookingSuccessPage />}
-      />
+        <Route
+          path="/bookings/:bookingId/success"
+          element={<BookingSuccessPage />}
+        />
+      </Route>
     </Routes>
   );
 };

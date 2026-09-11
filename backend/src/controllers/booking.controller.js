@@ -26,8 +26,6 @@ export const createBooking = async (req, res) => {
 
   const endDate = fromZonedTime(`${checkOut}T12:00:00`, timeZone);
 
-  console.log(startDate.toString(), endDate.toString());
-
   // sprawdzamy, czy daty są prawidłowe
   if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
     throw new AppError("Invalid booking dates", 400);
@@ -324,7 +322,7 @@ export const getCampgroundBookings = async (req, res) => {
   });
 };
 
-export const getCampgoundBookingsBlockedByOwner = async (req, res) => {
+export const getOwnerBlockedDates = async (req, res) => {
   const { campgroundId } = req.params;
   const userId = req.user._id;
 

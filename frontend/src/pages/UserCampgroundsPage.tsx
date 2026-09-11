@@ -74,6 +74,7 @@ const UserCampgroundsPage = () => {
   }, [currentUser, userId, params.page, params.limit]);
 
   useEffect(() => {
+    if (!currentUser || currentUser._id !== userId) return;
     const fetchBookingsCount = async () => {
       try {
         const data = await getBookingsStats();
@@ -123,7 +124,7 @@ const UserCampgroundsPage = () => {
           </h2>
 
           <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-            Create your first campground and start sharing it with the YelpCamp
+            Create your first campground and start sharing it with the Camply
             community.
           </p>
 

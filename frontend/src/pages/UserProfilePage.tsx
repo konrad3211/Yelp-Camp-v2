@@ -138,7 +138,7 @@ const UserProfilePage = () => {
           <CardTitle>Profile photo</CardTitle>
 
           <CardDescription>
-            Update the photo displayed on your profile and across YelpCamp.
+            Update the photo displayed on your profile and across Camply.
           </CardDescription>
         </CardHeader>
 

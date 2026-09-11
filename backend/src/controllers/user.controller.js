@@ -1,4 +1,3 @@
-import { file } from "zod";
 import { User } from "../models/user.model.js";
 import { uploadToCloudinary } from "../utils/uploadToCloudinary.js";
 import cloudinary from "../lib/cloudinary.js";

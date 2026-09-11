@@ -51,7 +51,7 @@ const Header = () => {
           state={{ action: "refresh" }}
           className="text-xl font-bold tracking-tight"
         >
-          YelpCamp
+          Camply
         </Link>
 
         {!user ? (

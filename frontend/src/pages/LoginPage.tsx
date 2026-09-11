@@ -1,26 +1,15 @@
 import { useState, type SubmitEventHandler } from "react";
-import { login } from "../api/auth.api";
 import { useLocation, useNavigate } from "react-router-dom";
+
+import { login } from "../api/auth.api";
 import { Button } from "@/components/ui/button";
 
 const LoginPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // location.state przechowuje informację, jaką akcję użytkownik
-  // chciał wykonać przed przejściem na stronę logowania.
   const locationState = location.state as {
-    action?:
-      | "contactOwner"
-      | "createReview"
-      | "updateCampground"
-      | "fetchBookings"
-      | "fetchConversations"
-      | "createCampground"
-      | "fetchBookings"
-      | "fetchUserCampgrounds";
-    campgroundId?: string;
-    from: string;
+    from?: string;
   } | null;
 
   const [email, setEmail] = useState("");
@@ -40,78 +29,12 @@ const LoginPage = () => {
         password,
       });
 
-      if (
-        locationState?.action === "createReview" &&
-        locationState?.campgroundId
-      ) {
-        navigate(`/campgrounds/${locationState.campgroundId}`, {
-          replace: true,
-          state: {
-            action: "createReview",
-          },
-        });
-        return;
-      }
-
-      if (
-        locationState?.action === "contactOwner" &&
-        locationState?.campgroundId
-      ) {
-        navigate(`/conversations/new`, {
-          replace: true,
-          state: {
-            campgroundId: locationState.campgroundId,
-          },
-        });
-        return;
-      }
-
-      if (
-        (locationState?.action === "fetchBookings" ||
-          locationState?.action === "updateCampground") &&
-        locationState?.from
-      ) {
-        navigate(locationState.from, {
-          replace: true,
-        });
-        return;
-      }
-
-      if (
-        locationState?.action === "fetchConversations" &&
-        locationState?.from === "/conversations"
-      ) {
-        navigate(locationState.from, {
-          replace: true,
-        });
-        return;
-      }
-      if (locationState?.action === "createCampground" && locationState?.from) {
-        navigate(locationState.from, {
-          replace: true,
-        });
-        return;
-      }
-      if (locationState?.action === "fetchBookings" && locationState?.from) {
-        navigate(locationState.from, {
-          replace: true,
-        });
-        return;
-      }
-
-      if (
-        locationState?.action === "fetchUserCampgrounds" &&
-        locationState?.from
-      ) {
-        navigate(locationState.from, {
-          replace: true,
-        });
-        return;
-      }
-      //jak powyzsze warunki sie nie wykonaja to przeniesie nas po zalogowaniu na homepage
-      navigate("/", { replace: true });
+      navigate(locationState?.from ?? "/", {
+        replace: true,
+      });
     } catch (error) {
       console.error("Login flow failed:", error);
+
       setError(error.response?.data?.message ?? "Failed to log in");
     } finally {
       setIsLoading(false);
@@ -125,7 +48,7 @@ const LoginPage = () => {
           <h1 className="text-3xl font-bold tracking-tight">Welcome back</h1>
 
           <p className="mt-2 text-sm text-muted-foreground">
-            Log in to continue to YelpCamp.
+            Log in to continue to Camply.
           </p>
         </div>
 
@@ -180,7 +103,7 @@ const LoginPage = () => {
             <div className="h-px flex-1 bg-border" />
 
             <span className="text-xs uppercase tracking-wide text-muted-foreground">
-              New to YelpCamp?
+              New to Camply?
             </span>
 
             <div className="h-px flex-1 bg-border" />
@@ -197,7 +120,7 @@ const LoginPage = () => {
         </div>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          Discover and book campgrounds added by the YelpCamp community.
+          Discover and book campgrounds added by the Camply community.
         </p>
       </div>
     </section>

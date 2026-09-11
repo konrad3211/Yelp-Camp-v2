@@ -49,7 +49,7 @@ const FakePaymentPage = () => {
 
         setBooking(data.data);
       } catch (error) {
-        console.log("Failed to fetch booking:", error);
+        console.error("Failed to fetch booking:", error);
 
         setError("Failed to fetch booking");
       } finally {

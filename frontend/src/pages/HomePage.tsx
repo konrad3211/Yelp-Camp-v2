@@ -193,7 +193,7 @@ const HomePage = () => {
           )}
 
           <p className="mt-3 max-w-2xl text-lg text-muted-foreground">
-            Discover unique places added by the YelpCamp community and find your
+            Discover unique places added by the Camply community and find your
             next stay.
           </p>
         </div>
@@ -299,7 +299,7 @@ const HomePage = () => {
           </h2>
 
           <p className="mt-2 text-muted-foreground">
-            Discover places added by the YelpCamp community.
+            Discover places added by the Camply community.
           </p>
         </div>
 

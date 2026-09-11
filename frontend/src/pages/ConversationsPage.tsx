@@ -65,8 +65,6 @@ const ConversationsPage = () => {
       conversation: Conversation;
       message: Message;
     }) => {
-      console.log("con", conversation);
-      console.log("msg", message);
       setConversations((prevConversations) => [
         {
           ...conversation,

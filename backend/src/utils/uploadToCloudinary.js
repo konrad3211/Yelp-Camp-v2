@@ -5,7 +5,7 @@ export const uploadToCloudinary = (file) => {
     cloudinary.uploader
       .upload_stream(
         {
-          folder: "yelp-camp",
+          folder: "camply",
         },
         (err, result) => {
           if (err) return reject(err);

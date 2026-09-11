@@ -13,7 +13,7 @@ import {
   getUserBookings,
   payForBooking,
   blockCampgroundDates,
-  getCampgoundBookingsBlockedByOwner,
+  getOwnerBlockedDates,
   cancelOwnerBooking,
   getCampgroundBookings,
   cancelUserBookingByOwner,
@@ -42,7 +42,7 @@ router.get(
 router.get(
   "/owner/campgrounds/:campgroundId",
   protect,
-  catchAsync(getCampgoundBookingsBlockedByOwner),
+  catchAsync(getOwnerBlockedDates),
 );
 
 router.get("/owner/stats", protect, catchAsync(countCampgroundBookings));

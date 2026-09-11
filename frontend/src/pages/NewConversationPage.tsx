@@ -30,8 +30,6 @@ const NewConversationPage = () => {
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState("");
 
-  console.log(state.action);
-
   useEffect(() => {
     const isConversation = async () => {
       try {

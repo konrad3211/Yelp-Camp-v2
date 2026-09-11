@@ -5,10 +5,10 @@ import {
   createMessage,
   getConversationMessages,
   getConversations,
-  isThereConvesration,
+  getExistingConversation,
   markMessagesAsRead,
   startConversation,
-  startConvesartionWithGuest,
+  startConversationWithGuest,
 } from "../controllers/conversation.controller.js";
 import { isConversationParticipant } from "../middleware/conversation.middleware.js";
 import { validate } from "../middleware/validate.middleware.js";
@@ -20,7 +20,7 @@ router.get("/", protect, catchAsync(getConversations));
 router.get(
   "/:campgroundId/:guestId/check",
   protect,
-  catchAsync(isThereConvesration),
+  catchAsync(getExistingConversation),
 );
 
 router.get(
@@ -40,7 +40,7 @@ router.post(
   "/start/:campgroundId/:guestId",
   protect,
   validate(createMessageSchema),
-  catchAsync(startConvesartionWithGuest),
+  catchAsync(startConversationWithGuest),
 );
 
 router.post(
