@@ -237,22 +237,40 @@ export const getConversations = async (req, res) => {
     })
     .sort({ updatedAt: -1 });
 
-  //liczy liczbe nieodczytanych wiadomosci
-  const conversationsWithUnreadCount = await Promise.all(
-    conversations.map(async (conversation) => {
-      const unreadCount = await Message.countDocuments({
-        conversation: conversation._id,
-        sender: { $ne: userId },
+  const conversationIds = conversations.map((conversation) => conversation._id);
+
+  const unreadCounts = await Message.aggregate([
+    {
+      $match: {
+        conversation: {
+          $in: conversationIds,
+        },
         isRead: false,
-      });
-      //tutaj jest toObject poniewaz jak robimy spread to pokazujemy cala strukture obiektu mongoose, wiec musimy dac toObject aby wynik wygladal schludnie. Robimy spread poniewaz chcemy miec jeden obiekt ktory ma conversation i unreadCount a nie conversation: {} i unreadConut: {}
-      //ewentualnie mozna uzyc lean() w zapytaniu conversations
-      return {
-        ...conversation.toObject(),
-        unreadCount,
-      };
-    }),
-  );
+        sender: {
+          $ne: userId,
+        },
+      },
+    },
+    {
+      $group: {
+        _id: "$conversation",
+        unreadCount: {
+          $sum: 1,
+        },
+      },
+    },
+  ]);
+  //tutaj jest toObject poniewaz jak robimy spread to pokazujemy cala strukture obiektu mongoose, wiec musimy dac toObject aby wynik wygladal schludnie. Robimy spread poniewaz chcemy miec jeden obiekt ktory ma conversation i unreadCount a nie conversation: {} i unreadConut: {}
+
+  const conversationsWithUnreadCount = conversations.map((conversation) => {
+    const unreadData = unreadCounts.find(
+      (item) => item._id.toString() === conversation._id.toString(),
+    );
+    return {
+      ...conversation.toObject(),
+      unreadCount: unreadData?.unreadCount ?? 0,
+    };
+  });
 
   res.status(200).json({
     success: true,

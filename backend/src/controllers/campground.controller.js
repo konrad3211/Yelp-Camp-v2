@@ -118,8 +118,8 @@ export const createCampground = async (req, res) => {
 
   const { street, city, houseNumber, ...data } = req.body;
 
-  if (files.length === 0) {
-    throw new AppError("At least one image is required", 400);
+  if (files.length < 6) {
+    throw new AppError("At least 6 images are required", 400);
   }
 
   const hasEmptyFile = files.some(
@@ -147,40 +147,49 @@ export const createCampground = async (req, res) => {
     throw new AppError("Location could not be found", 400);
   }
 
-  const uploadedImages = await Promise.all(
-    files.map(async (file) => {
+  const uploadedImages = [];
+
+  try {
+    for (const file of files) {
       const result = await uploadToCloudinary(file);
 
-      return {
+      uploadedImages.push({
         url: result.secure_url,
         filename: result.public_id,
-      };
-    }),
-  );
+      });
+    }
 
-  const location = `${street} ${houseNumber}, ${city}`;
-  const formattedLocation = geocodedLocation.displayName;
+    const location = `${street} ${houseNumber}, ${city}`;
+    const formattedLocation = geocodedLocation.displayName;
 
-  const newCampground = await Campground.create({
-    ...data,
-    city,
-    street,
-    houseNumber,
-    location,
-    formattedLocation,
-    geometry: {
-      type: "Point",
-      coordinates: [geocodedLocation.longitude, geocodedLocation.latitude],
-    },
-    images: uploadedImages,
-    author: userId,
-  });
+    const newCampground = await Campground.create({
+      ...data,
+      city,
+      street,
+      houseNumber,
+      location,
+      formattedLocation,
+      geometry: {
+        type: "Point",
+        coordinates: [geocodedLocation.longitude, geocodedLocation.latitude],
+      },
+      images: uploadedImages,
+      author: userId,
+    });
 
-  res.status(201).json({
-    success: true,
-    message: "Campground has been created successfully",
-    data: newCampground,
-  });
+    res.status(201).json({
+      success: true,
+      message: "Campground has been created successfully",
+      data: newCampground,
+    });
+  } catch (error) {
+    await Promise.all(
+      uploadedImages.map((image) =>
+        cloudinary.uploader.destroy(image.filename),
+      ),
+    );
+    throw error;
+  }
 };
 
 export const updateCampground = async (req, res) => {
