@@ -475,18 +475,6 @@ const CampgroundPage = () => {
       return;
     }
 
-    if (!currentUser) {
-      navigate("/login", {
-        state: {
-          campgroundId: campground._id,
-          action: "contactOwner",
-          guest: currentUser,
-        },
-      });
-
-      return;
-    }
-
     if (currentUser._id === campground.author._id) {
       return;
     }

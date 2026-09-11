@@ -269,26 +269,35 @@ export const updateCampgroundImages = async (req, res) => {
     throw new AppError(message, 400);
   }
 
-  const uploadedImages = await Promise.all(
-    files.map(async (file) => {
+  const uploadedImages = [];
+
+  try {
+    for (const file of files) {
       const result = await uploadToCloudinary(file);
 
-      return {
+      const uploadedImage = {
         url: result.secure_url,
         filename: result.public_id,
       };
-    }),
-  );
 
-  campground.images.push(...uploadedImages);
+      uploadedImages.push(uploadedImage);
 
-  await campground.save();
+      campground.images.push(uploadedImage);
+    }
 
-  res.status(200).json({
-    success: true,
-    message: "Images have been added successfully",
-    data: campground,
-  });
+    await campground.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Images have been added successfully",
+      data: campground,
+    });
+  } catch (error) {
+    await Promise.allSettled(
+      uploadedImages.map((file) => cloudinary.uploader.destroy(file.filename)),
+    );
+    throw error;
+  }
 };
 
 export const deleteCampgroundImage = async (req, res) => {
@@ -367,7 +376,9 @@ export const getUserCampgrounds = async (req, res) => {
     .limit(limit)
     .sort({ createdAt: -1 });
 
-  const totalCampgrounds = await Campground.countDocuments(userCampgrounds);
+  const totalCampgrounds = await Campground.countDocuments({
+    author: userId,
+  });
 
   res.status(200).json({
     success: true,

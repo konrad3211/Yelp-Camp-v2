@@ -103,17 +103,6 @@ const BookingForm = ({ campgroundId, pricePerNight }: BookingFormProps) => {
       return;
     }
 
-    if (!currentUser) {
-      navigate("/login", {
-        state: {
-          campgroundId,
-          action: "createBooking",
-        },
-      });
-
-      return;
-    }
-
     try {
       setIsCreating(true);
       setError("");

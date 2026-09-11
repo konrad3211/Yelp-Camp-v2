@@ -67,16 +67,6 @@ const CreateCampgroundPage = () => {
     }
   };
 
-  if (!currentUser) {
-    return (
-      <Navigate
-        to="/login"
-        state={{ action: "createCampground", from: "/campgrounds/new" }}
-        replace
-      />
-    );
-  }
-
   return (
     <section className="mx-auto max-w-4xl space-y-8 py-6">
       <div className="space-y-2">

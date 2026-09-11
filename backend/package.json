@@ -1,10 +1,10 @@
 {
-  "name": "Camply",
+  "name": "camply-api",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "REST API for the Camply campground booking platform",
   "scripts": {
     "dev": "nodemon src/index.js",
+    "start": "node src/index.js",
     "seed": "node seeds/index.js"
   },
   "keywords": [],

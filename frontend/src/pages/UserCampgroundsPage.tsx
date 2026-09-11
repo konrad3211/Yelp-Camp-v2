@@ -86,19 +86,6 @@ const UserCampgroundsPage = () => {
     fetchBookingsCount();
   }, []);
 
-  if (!currentUser) {
-    return (
-      <Navigate
-        to="/login"
-        state={{
-          action: "fetchUserCampgrounds",
-          from: `/campgrounds/user/${userId}`,
-        }}
-        replace
-      />
-    );
-  }
-
   if (!userId) {
     return <Navigate to="/" />;
   }

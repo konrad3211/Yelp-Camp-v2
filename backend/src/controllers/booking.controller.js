@@ -150,6 +150,7 @@ export const payForBooking = async (req, res) => {
   const booking = await Booking.findOne({
     _id: req.params.bookingId,
     user: req.user._id,
+    type: "booking",
   });
 
   if (!booking) {
@@ -219,6 +220,7 @@ export const getUserBooking = async (req, res) => {
     user: userId,
     campground: campgroundId,
     status: "confirmed",
+    type: "booking",
   }).sort({ createdAt: -1 });
 
   if (!userBooking) {
@@ -252,11 +254,15 @@ export const getUserBookings = async (req, res) => {
     user: userId,
     type: "booking",
   };
+
+  const allowedStatuses = ["pending", "confirmed", "cancelled"];
+
+  if (status && !allowedStatuses.includes(status)) {
+    throw new AppError("Invalid booking status", 400);
+  }
+
   if (status) {
-    filter.status = {
-      $regex: status,
-      $options: "i",
-    };
+    filter.status = status;
   }
 
   const userBookings = await Booking.find(filter)
@@ -345,6 +351,7 @@ export const cancelUserBooking = async (req, res) => {
   const booking = await Booking.findOne({
     _id: bookingId,
     user: userId,
+    type: "booking",
   });
   if (!booking) {
     throw new AppError("Booking not found", 404);

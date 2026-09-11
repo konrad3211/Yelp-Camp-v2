@@ -118,10 +118,6 @@ const UserProfilePage = () => {
     }
   };
 
-  if (!currentUser) {
-    return <PageLoader />;
-  }
-
   return (
     <section className="mx-auto max-w-4xl space-y-8 px-4 pb-16 pt-10">
       <div>

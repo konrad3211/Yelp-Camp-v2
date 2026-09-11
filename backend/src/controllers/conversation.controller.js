@@ -160,8 +160,8 @@ export const getExistingConversation = async (req, res) => {
   const userId = req.user._id;
   const { guestId, campgroundId } = req.params;
 
-  if (!userId && !guestId && !campgroundId) {
-    throw new AppError("There are no params to check a conversation", 400);
+  if (!guestId || !campgroundId) {
+    throw new AppError("Guest ID and campground ID are required", 400);
   }
 
   const conversation = await Conversation.findOne({

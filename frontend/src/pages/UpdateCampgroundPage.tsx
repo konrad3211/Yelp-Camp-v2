@@ -96,10 +96,6 @@ const UpdateCampgroundPage = () => {
       return;
     }
 
-    if (!currentUser) {
-      setIsBookingsLoading(false);
-      return;
-    }
     const fetchOwnerBookings = async () => {
       try {
         const bookings = await getOwnerBlockedDates(id);
@@ -120,10 +116,6 @@ const UpdateCampgroundPage = () => {
       return;
     }
 
-    if (!currentUser) {
-      setIsLoading(false);
-      return;
-    }
     const fetchCampgroundData = async () => {
       try {
         setFetchError("");
@@ -263,19 +255,6 @@ const UpdateCampgroundPage = () => {
 
   if (isCampgroundDeleting) {
     return <PageLoader />;
-  }
-
-  if (!currentUser) {
-    return (
-      <Navigate
-        to={"/login"}
-        replace
-        state={{
-          action: "updateCampground",
-          from: `/campgrounds/${id}/update`,
-        }}
-      />
-    );
   }
 
   if (fetchError) {
