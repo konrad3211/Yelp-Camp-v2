@@ -183,7 +183,7 @@ export const createCampground = async (req, res) => {
       data: newCampground,
     });
   } catch (error) {
-    await Promise.all(
+    await Promise.allSettled(
       uploadedImages.map((image) =>
         cloudinary.uploader.destroy(image.filename),
       ),
