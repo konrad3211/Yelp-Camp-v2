@@ -8,7 +8,6 @@ import {
 } from "@/components/ui/card";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type SubmitHandler } from "react-hook-form";
-import PageLoader from "@/components/PageLoader";
 import {
   updateProfileSchema,
   updateUserImageSchema,
@@ -99,7 +98,7 @@ const UserProfilePage = () => {
       toast.success("Password has been changed successfully!");
       resetPassword();
     } catch (error) {
-      // console.error("Failed to change a password", error);
+      console.error("Failed to change a password", error);
       toast.error(error.response?.data?.message);
     }
   };

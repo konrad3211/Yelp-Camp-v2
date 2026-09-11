@@ -24,6 +24,7 @@ import type { Booking } from "@/types/booking";
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { CalendarDays, Eye } from "lucide-react";
+import ErrorState from "@/components/ErrorState";
 
 const BookingsPage = () => {
   const currentUser = useAuthStore((state) => state.user);
@@ -93,7 +94,7 @@ const BookingsPage = () => {
   }
 
   if (fetchBookingsError) {
-    return <p className="text-destructive">{fetchBookingsError}</p>;
+    return <ErrorState message={fetchBookingsError} />;
   }
 
   if (bookings.length === 0) {

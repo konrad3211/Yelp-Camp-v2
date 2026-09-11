@@ -11,6 +11,7 @@ import { socket } from "../lib/socket";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuthStore } from "@/store/auth.store";
 import PageLoader from "@/components/PageLoader";
+import ErrorState from "@/components/ErrorState";
 
 const ConversationsPage = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -114,11 +115,7 @@ const ConversationsPage = () => {
   }
 
   if (error) {
-    return (
-      <section className="mx-auto max-w-3xl py-8">
-        <p className="text-sm text-destructive">{error}</p>
-      </section>
-    );
+    return <ErrorState message={error} />;
   }
 
   return (

@@ -1,4 +1,5 @@
 import { getBooking, payForBooking } from "@/api/booking.api";
+import ErrorState from "@/components/ErrorState";
 import PageLoader from "@/components/PageLoader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -98,20 +99,12 @@ const FakePaymentPage = () => {
     return <PageLoader />;
   }
 
-  if (error && !booking) {
-    return (
-      <div className="mx-auto max-w-xl px-4 py-10">
-        <p className="text-sm text-destructive">{error}</p>
-      </div>
-    );
+  if (error) {
+    return <ErrorState message={error} />;
   }
 
   if (!booking) {
-    return (
-      <div className="mx-auto max-w-xl px-4 py-10">
-        <p>Booking not found</p>
-      </div>
-    );
+    return <ErrorState message="Booking not found" />;
   }
 
   return (

@@ -1,5 +1,6 @@
 import { getBookingsStats } from "@/api/booking.api";
 import { getUserCampgrounds } from "@/api/campground.api";
+import ErrorState from "@/components/ErrorState";
 import PageLoader from "@/components/PageLoader";
 import { Button } from "@/components/ui/button";
 import {
@@ -95,7 +96,7 @@ const UserCampgroundsPage = () => {
   }
 
   if (error) {
-    return <p className="text-destructive">{error}</p>;
+    return <ErrorState message={error} />;
   }
 
   if (campgrounds.length === 0 && currentUser._id === userId) {

@@ -13,6 +13,7 @@ import { ArrowLeft, CheckCheck, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import PageLoader from "@/components/PageLoader";
+import ErrorState from "@/components/ErrorState";
 
 const ConversationPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -176,11 +177,7 @@ const ConversationPage = () => {
   }
 
   if (error && messages.length === 0) {
-    return (
-      <section className="mx-auto max-w-4xl px-4 py-8">
-        <p className="text-sm text-destructive">{error}</p>
-      </section>
-    );
+    return <ErrorState message={error} />;
   }
 
   return (

@@ -52,6 +52,7 @@ import PageLoader from "@/components/PageLoader";
 import { deleteOwnerBooking, getOwnerBlockedDates } from "@/api/booking.api";
 import BookingFormForOwner from "@/components/bookings/BookingFormForOwner";
 import type { Booking } from "@/types/booking";
+import ErrorState from "@/components/ErrorState";
 
 const UpdateCampgroundPage = () => {
   const { id } = useParams();
@@ -258,7 +259,7 @@ const UpdateCampgroundPage = () => {
   }
 
   if (fetchError) {
-    return <p>{fetchError}</p>;
+    return <ErrorState message={fetchError} />;
   }
 
   if (!campground) {

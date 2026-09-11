@@ -1,4 +1,5 @@
 import { getBooking } from "@/api/booking.api";
+import ErrorState from "@/components/ErrorState";
 import PageLoader from "@/components/PageLoader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -53,7 +54,7 @@ const BookingSuccessPage = () => {
   }
 
   if (error) {
-    return <p className="text-center text-destructive">{error}</p>;
+    return <ErrorState message={error} />;
   }
 
   if (!booking) {

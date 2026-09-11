@@ -24,16 +24,6 @@ import PageLoader from "@/components/PageLoader";
 
 const HomePage = () => {
   const [urlSearchParams, setUrlSearchParams] = useSearchParams();
-  const [campgrounds, setCampgrounds] = useState<Campground[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSearching, setIsSearching] = useState(false);
-  const [error, setError] = useState("");
-
-  const [totalPages, setTotalPages] = useState(1);
-
-  const pages = Array.from({ length: totalPages }, (_, index) => index + 1);
-
-  const page = Math.max(Number(urlSearchParams.get("page")) || 1, 1);
 
   const [filters, setFilters] = useState({
     location: urlSearchParams.get("location") || "",
@@ -41,7 +31,17 @@ const HomePage = () => {
     checkOut: urlSearchParams.get("checkOut") || "",
   });
 
-  const [checkInDate, setCheckInDate] = useState("");
+  const [searchForm, setSearchForm] = useState({
+    location: filters.location,
+    checkIn: filters.checkIn,
+    checkOut: filters.checkOut,
+  });
+
+  const [campgrounds, setCampgrounds] = useState<Campground[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSearching, setIsSearching] = useState(false);
+  const [error, setError] = useState("");
+  const [totalPages, setTotalPages] = useState(1);
 
   const checkInRef = useRef<HTMLInputElement>(null);
   const checkOutRef = useRef<HTMLInputElement>(null);
@@ -53,11 +53,40 @@ const HomePage = () => {
 
   const state = location.state ?? {};
 
+  const page = Math.max(Number(urlSearchParams.get("page")) || 1, 1);
+
+  const pages = Array.from({ length: totalPages }, (_, index) => index + 1);
+
   const today = new Date();
 
   const todayFormatted = `${today.getFullYear()}-${String(
     today.getMonth() + 1,
   ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+  const getNextDay = (date: string) => {
+    if (!date) return todayFormatted;
+
+    const nextDay = new Date(`${date}T00:00:00`);
+
+    nextDay.setDate(nextDay.getDate() + 1);
+
+    return `${nextDay.getFullYear()}-${String(nextDay.getMonth() + 1).padStart(
+      2,
+      "0",
+    )}-${String(nextDay.getDate()).padStart(2, "0")}`;
+  };
+
+  const minimumCheckOutDate = searchForm.checkIn
+    ? getNextDay(searchForm.checkIn)
+    : todayFormatted;
+
+  const isSearchUnchanged =
+    searchForm.location === filters.location &&
+    searchForm.checkIn === filters.checkIn &&
+    searchForm.checkOut === filters.checkOut;
+
+  const hasIncompleteDateRange =
+    Boolean(searchForm.checkIn) !== Boolean(searchForm.checkOut);
 
   useEffect(() => {
     if (state?.action === "deleteCampground") {
@@ -69,30 +98,14 @@ const HomePage = () => {
     }
 
     if (state?.action === "refresh") {
-      setFilters({
+      const emptyFilters = {
         location: "",
         checkIn: "",
         checkOut: "",
-      });
+      };
 
-      const locationInput =
-        document.querySelector<HTMLInputElement>("#location");
-
-      if (locationInput) {
-        locationInput.value = "";
-      }
-
-      const checkIn = document.querySelector<HTMLInputElement>("#checkIn");
-
-      if (checkIn) {
-        checkIn.value = "";
-      }
-
-      const checkOut = document.querySelector<HTMLInputElement>("#checkOut");
-
-      if (checkOut) {
-        checkOut.value = "";
-      }
+      setFilters(emptyFilters);
+      setSearchForm(emptyFilters);
     }
 
     navigate(state.pathname, {
@@ -133,33 +146,52 @@ const HomePage = () => {
     fetchCampgrounds();
   }, [filters.location, filters.checkIn, filters.checkOut, page]);
 
+  const handleCheckInChange = (value: string) => {
+    setSearchForm((prev) => {
+      let checkOut = prev.checkOut;
+
+      if (value && checkOut && checkOut <= value) {
+        checkOut = "";
+      }
+
+      if (!value) {
+        checkOut = "";
+      }
+
+      return {
+        ...prev,
+        checkIn: value,
+        checkOut,
+      };
+    });
+  };
+
   const handleSearch: SubmitEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();
 
-    const formData = new FormData(event.currentTarget);
-
-    const location = formData.get("location");
-    const checkIn = formData.get("checkIn");
-    const checkOut = formData.get("checkOut");
+    if (isSearchUnchanged || hasIncompleteDateRange) {
+      return;
+    }
 
     setUrlSearchParams((prev) => {
-      if (location) {
-        prev.set("location", location.toString());
+      if (searchForm.location.trim()) {
+        prev.set("location", searchForm.location.trim());
       } else {
         prev.delete("location");
       }
 
-      if (checkIn) {
-        prev.set("checkIn", checkIn.toString());
+      if (searchForm.checkIn) {
+        prev.set("checkIn", searchForm.checkIn);
       } else {
         prev.delete("checkIn");
       }
 
-      if (checkOut) {
-        prev.set("checkOut", checkOut.toString());
+      if (searchForm.checkOut) {
+        prev.set("checkOut", searchForm.checkOut);
       } else {
         prev.delete("checkOut");
       }
+
       prev.set("page", "1");
 
       return prev;
@@ -168,9 +200,9 @@ const HomePage = () => {
     setIsSearching(true);
 
     setFilters({
-      location: location?.toString() ?? "",
-      checkIn: checkIn?.toString() ?? "",
-      checkOut: checkOut?.toString() ?? "",
+      location: searchForm.location.trim(),
+      checkIn: searchForm.checkIn,
+      checkOut: searchForm.checkOut,
     });
   };
 
@@ -217,11 +249,16 @@ const HomePage = () => {
 
                   <input
                     id="location"
-                    defaultValue={filters.location}
                     name="location"
-                    type="text"
+                    value={searchForm.location}
                     placeholder="Where do you want to go?"
                     className="mt-1 w-full bg-transparent text-sm font-medium outline-none placeholder:font-normal placeholder:text-muted-foreground"
+                    onChange={(event) =>
+                      setSearchForm((prev) => ({
+                        ...prev,
+                        location: event.target.value,
+                      }))
+                    }
                   />
                 </div>
               </div>
@@ -243,26 +280,40 @@ const HomePage = () => {
                   <input
                     ref={checkInRef}
                     id="checkIn"
-                    defaultValue={filters.checkIn}
                     name="checkIn"
                     type="date"
+                    value={searchForm.checkIn}
                     min={todayFormatted}
-                    onChange={(event) => setCheckInDate(event.target.value)}
                     className="mt-1 w-full cursor-pointer bg-transparent text-sm font-medium outline-none [&::-webkit-calendar-picker-indicator]:hidden"
+                    onChange={(event) =>
+                      handleCheckInChange(event.target.value)
+                    }
                   />
                 </div>
               </div>
 
               <div
-                onClick={() => checkOutRef.current?.showPicker()}
-                className="flex min-h-18 cursor-pointer items-center gap-3 rounded-xl border-t px-4 transition hover:bg-muted/40 md:border-l md:border-t-0"
+                onClick={() => {
+                  if (!searchForm.checkIn) return;
+
+                  checkOutRef.current?.showPicker();
+                }}
+                className={`flex min-h-18 items-center gap-3 rounded-xl border-t px-4 transition md:border-l md:border-t-0 ${
+                  searchForm.checkIn
+                    ? "cursor-pointer hover:bg-muted/40"
+                    : "cursor-not-allowed opacity-50"
+                }`}
               >
                 <CalendarDays className="size-6 shrink-0 text-muted-foreground" />
 
                 <div className="min-w-0 flex-1">
                   <label
                     htmlFor="checkOut"
-                    className="block cursor-pointer text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                    className={`block text-xs font-semibold uppercase tracking-wide text-muted-foreground ${
+                      searchForm.checkIn
+                        ? "cursor-pointer"
+                        : "cursor-not-allowed"
+                    }`}
                   >
                     Check out
                   </label>
@@ -270,21 +321,31 @@ const HomePage = () => {
                   <input
                     ref={checkOutRef}
                     id="checkOut"
-                    defaultValue={filters.checkOut}
                     name="checkOut"
                     type="date"
-                    min={checkInDate || todayFormatted}
-                    className="mt-1 w-full cursor-pointer bg-transparent text-sm font-medium outline-none [&::-webkit-calendar-picker-indicator]:hidden"
+                    value={searchForm.checkOut}
+                    min={minimumCheckOutDate}
+                    disabled={!searchForm.checkIn}
+                    className="mt-1 w-full cursor-pointer bg-transparent text-sm font-medium outline-none disabled:cursor-not-allowed [&::-webkit-calendar-picker-indicator]:hidden"
+                    onChange={(event) =>
+                      setSearchForm((prev) => ({
+                        ...prev,
+                        checkOut: event.target.value,
+                      }))
+                    }
                   />
                 </div>
               </div>
 
               <Button
                 type="submit"
-                disabled={isSearching}
+                disabled={
+                  isSearching || isSearchUnchanged || hasIncompleteDateRange
+                }
                 className="min-h-14 rounded-xl px-7 md:min-h-18"
               >
                 <Search className="size-5" />
+
                 {isSearching ? "Searching..." : "Search"}
               </Button>
             </div>
@@ -417,6 +478,7 @@ const HomePage = () => {
             })}
           </div>
         )}
+
         {totalPages > 1 && (
           <div className="mt-8 flex items-center justify-center gap-2">
             <Button
@@ -425,6 +487,7 @@ const HomePage = () => {
               onClick={() => {
                 setUrlSearchParams((prev) => {
                   prev.set("page", (page - 1).toString());
+
                   return prev;
                 });
               }}
@@ -440,6 +503,7 @@ const HomePage = () => {
                 onClick={() => {
                   setUrlSearchParams((prev) => {
                     prev.set("page", pageNumber.toString());
+
                     return prev;
                   });
                 }}
@@ -454,6 +518,7 @@ const HomePage = () => {
               onClick={() => {
                 setUrlSearchParams((prev) => {
                   prev.set("page", (page + 1).toString());
+
                   return prev;
                 });
               }}

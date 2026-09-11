@@ -18,6 +18,7 @@ import {
   MessageCircle,
   X,
 } from "lucide-react";
+import ErrorState from "@/components/ErrorState";
 
 const CampgroundBookingsPage = () => {
   const { campgroundId } = useParams<{ campgroundId: string }>();
@@ -75,28 +76,7 @@ const CampgroundBookingsPage = () => {
   }
 
   if (error) {
-    return (
-      <section className="mx-auto max-w-3xl px-4 py-16">
-        <div className="rounded-2xl border border-destructive/20 bg-destructive/5 px-6 py-10 text-center">
-          <p className="font-medium text-destructive">
-            Failed to load bookings
-          </p>
-
-          <p className="mt-2 text-sm text-muted-foreground">
-            Something went wrong while loading campground reservations.
-          </p>
-
-          <Button
-            variant="outline"
-            className="mt-6"
-            onClick={() => navigate(state?.from ?? "/")}
-          >
-            <ArrowLeft className="size-4" />
-            Go back
-          </Button>
-        </div>
-      </section>
-    );
+    return <ErrorState message={error} />;
   }
 
   if (campgroundBookings.length === 0) {

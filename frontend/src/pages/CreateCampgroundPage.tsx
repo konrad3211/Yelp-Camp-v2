@@ -11,8 +11,6 @@ import {
   type CreateCampgroundFormData,
 } from "@/schemas/campground.schema";
 
-import { useAuthStore } from "@/store/auth.store";
-
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -28,8 +26,6 @@ const inputClassName =
 const labelClassName = "mb-2 block text-sm font-medium";
 
 const CreateCampgroundPage = () => {
-  const currentUser = useAuthStore((state) => state.user);
-
   const navigate = useNavigate();
 
   const [serverError, setServerError] = useState("");

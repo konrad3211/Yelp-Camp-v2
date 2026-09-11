@@ -29,6 +29,7 @@ import CampgroundMap from "@/components/CampgroundMap";
 import type { userBooking } from "@/types/booking";
 import { getUserBooking, getUserBookings } from "@/api/booking.api";
 import PageLoader from "@/components/PageLoader";
+import ErrorState from "@/components/ErrorState";
 
 const REVIEWS_LIMIT = 10;
 
@@ -492,7 +493,7 @@ const CampgroundPage = () => {
   }
 
   if (error) {
-    return <p>{error}</p>;
+    return <ErrorState message={error} />;
   }
 
   if (!campground) {
